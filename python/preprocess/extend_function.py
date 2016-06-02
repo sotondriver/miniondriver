@@ -2,7 +2,6 @@ import os
 import pandas as pd
 
 
-
 def listdir_no_hidden(path):
     list1 = []
     for f in os.listdir(path):
@@ -21,6 +20,7 @@ def load_cluster_map(path):
     array = table.get_values()
     district_dict = {array[i][0]: array[i][1] for i in range(0, len(array), 1)}
     return district_dict
+
 
 def get_time_slot(time):
     time = time.replace(' ', ':')

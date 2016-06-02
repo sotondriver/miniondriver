@@ -14,8 +14,8 @@ def load_traffic_data(district_dict, path):
                 line_list[0] = district_dict[line_list[0]]
                 traffic_class = np.zeros(4, dtype='int')
                 for i in range(1, len(line_list), 1):
-                    if i<=4:
-                        temp =  line_list[i].split(':')
+                    if i <= 4:
+                        temp = line_list[i].split(':')
                         ind = int(temp[0])
                         num = int(temp[1])
                         traffic_class[ind-1] = num
@@ -25,10 +25,11 @@ def load_traffic_data(district_dict, path):
                 traffic_list.append(temp_list)
     return traffic_list
 
+
 def save_traffic_data(district_dict, p1, p2):
-    traffic_list = load_traffic_data(district_dict,p1)
+    traffic_list = load_traffic_data(district_dict, p1)
     header = ['district_ID']
     for i in range(1, 4 + 1, 1):
         header.append('traffic_jam_class' + str(i))
-    header += ['date','time_slot']
+    header += ['date', 'time_slot']
     write_list_to_csv(traffic_list, outpath=p2, header=header)
