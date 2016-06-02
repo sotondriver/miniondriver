@@ -20,6 +20,7 @@ Table = []
 Root = []
 
 root ='citydata/season_1/training_data/weather_data/'
+# root = '..../season_1/training_data/weather_data/'
 for path, subdirs, files in os.walk(root):
         for name in files:
             finalPath = './' + path + '/' + name
@@ -44,4 +45,5 @@ for r in Root:
             Table.append(words)
     
 table = pd.DataFrame(Table)
+header = ['date','time-slot','weather','temprature','PM2.5']
 table.to_csv('Weather_table.csv',index = False, header = False)
