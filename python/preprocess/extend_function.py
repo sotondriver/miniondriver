@@ -41,6 +41,7 @@ def load_poi(path, district_dict):
             poi_list.append([line_list[0]] + list(poi_1class))
     return poi_list
 
+
 def write_poi(p1, p2, p3):
     district_dict = load_cluster_map(p1)
     poi_list = load_poi(p2, district_dict)
@@ -48,3 +49,4 @@ def write_poi(p1, p2, p3):
     for i in range(1, 25+1, 1):
         header.append('class'+str(i))
     write_list_to_csv(poi_list, outpath=p3, header=header)
+
