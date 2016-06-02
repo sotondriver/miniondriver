@@ -1,5 +1,6 @@
-import numpy as np
 from preprocess.extend_function import *
+from preprocess.poi_process import save_poi_data
+from preprocess.traffic_process import save_traffic_data
 
 # class order(object):
 #
@@ -18,7 +19,14 @@ from preprocess.extend_function import *
 
 if __name__ == '__main__':
     cluster_path = '../season_1/training_data/cluster_map/cluster_map'
-    poi_path = '../season_1/training_data/poi_data/poi_data'
-    poi_out_path = '../processed_data/poi_data.csv'
-    write_poi(cluster_path, poi_path, poi_out_path)
 
+    poi_in_path = '../season_1/training_data/poi_data/poi_data'
+    poi_out_path = '../processed_data/poi_data.csv'
+
+    traffic_in_path = '../season_1/training_data/traffic_data'
+    traffic_out_path = '../processed_data/traffic_data.csv'
+
+    district_dict = load_cluster_map(cluster_path)
+
+    save_traffic_data(district_dict, traffic_in_path, traffic_out_path)
+    save_poi_data(district_dict, poi_in_path, poi_out_path)
