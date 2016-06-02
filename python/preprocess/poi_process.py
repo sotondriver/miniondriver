@@ -1,3 +1,9 @@
+# -*- coding: utf-8 -*-
+"""
+Created on 16/6/3 00:22 2016
+
+@author: harry sun
+"""
 from extend_function import write_list_to_csv
 import numpy as np
 
