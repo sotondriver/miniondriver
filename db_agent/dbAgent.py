@@ -8,6 +8,7 @@ import sys, getopt
 OPTION_ERROR = 0
 PARAM_ERROR = 1
 NO_ARG = 2
+MAND_ARG_MISSING = 3
 
 # Instruction Constant
 COMMAND_HELP = ['-i\tInput file name from where wanted to read the data (CSV)', '-c\tConfiguration file where all the information about the database and structure is contained', '-u\t Username of database', '-p\tPassword of the database']
@@ -51,7 +52,9 @@ def printError(errorType):
 		print 'Parameters Error: One or more parameters are missing'	
 	elif errorType == NO_ARG:
 		print 'No arguments shutting down! Bye Bye!'
-
+	elif errorType ==MAND_ARG_MISSING:
+		print 'Mandatory arguments are missing!'
+		
 	sys.exit(2)
 
 # Prints help for the commands available
