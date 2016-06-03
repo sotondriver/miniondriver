@@ -36,6 +36,6 @@ def save_traffic_data(district_dict, path_in, path_out):
     traffic_list = load_traffic_data(district_dict, path_in)
     header = ['district_ID']
     for i in range(1, 4 + 1, 1):
-        header.append('traffic_jam_class' + str(i))
+        header.append('tj_class' + str(i))
     header += ['date', 'time_slot']
     write_list_to_csv(traffic_list, path_out=path_out, header=header)
