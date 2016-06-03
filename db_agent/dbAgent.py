@@ -3,6 +3,8 @@ from pymongo import MongoClient
 
 import sys, getopt
 
+# Agent Constants
+BLANK = ''
 
 # Error Constants
 OPTION_ERROR = 0
@@ -54,7 +56,7 @@ def printError(errorType):
 		print 'No arguments shutting down! Bye Bye!'
 	elif errorType ==MAND_ARG_MISSING:
 		print 'Mandatory arguments are missing!'
-		
+
 	sys.exit(2)
 
 # Prints help for the commands available
@@ -64,7 +66,8 @@ def printHelp():
 
 # Main insert data process
 def insertData(iFile, cFile):
-	print 'testing'
+	if iFile == BLANK or cFile == BLANK:
+		printError(MAND_ARG_MISSING)
 
 if __name__ == '__main__':
 		main(sys.argv[1:])	
