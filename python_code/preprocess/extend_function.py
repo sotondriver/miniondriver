@@ -16,9 +16,9 @@ def listdir_no_hidden(path):
     return list1
 
 
-def write_list_to_csv(list1, outpath, header=False):
+def write_list_to_csv(list1, path_out, header=False):
     temp = pd.DataFrame(list1)
-    temp.to_csv(outpath, index=False, header=header)
+    temp.to_csv(path_out, index=False, header=header)
 
 
 def load_cluster_map(path):

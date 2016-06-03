@@ -10,23 +10,37 @@ import numpy as np
 import hashlib
 import os
 
-root ='../../season_1/training_data/order_data'
-Root = []
-order_datas = []
-for path, subdirs, files in os.walk(root):
-        for name in files:
-            finalPath = './' + path + '/' + name
-            Root.append(finalPath)
-    
-#order_data = pd.read_table('training_data/order_data/order_data_2016-01-03', names=['order_id', 'driver_id','passenger_id','start_district_hash','dest_district_hash','Price','Time'])
-cluster_map = pd.read_table('../../season_1/training_data/cluster_map/cluster_map', names=['district_hash', 'district_id'])
+from extend_function import write_list_to_csv
 
-for i in range(len(Root)):
-    print i
-    order_datas.append(pd.read_table(Root[i], names=['order_id', 'driver_id','passenger_id','start_district_hash','dest_district_hash','Price','Time']))
+
+cluster_map = []
+
+def save_order_data(path_in, path_out, cluster_path):
+    global cluster_map
+    root = path_in
+    Root = []
+    order_datas = []
+    for path, subdirs, files in os.walk(root):
+            for name in files:
+                finalPath = './' + path + '/' + name
+                Root.append(finalPath)
+
+    for i in range(len(Root)):
+        print('Read File NO. ' + str(i))
+        order_datas.append(pd.read_table(Root[i], names=['order_id', 'driver_id', 'passenger_id', 'start_district_hash',
+                                                'dest_district_hash', 'Price', 'Time']))
+
+    cluster_map = pd.read_table(cluster_path, names=['district_hash', 'district_id'])
+    new_tables = []
+    for i in range(len(order_datas)):
+        print('Process File NO. '+str(i))
+        new_tables.extend(new_table(order_datas[i]))
+
+    write_list_to_csv(new_tables, path_out, header=['total_orders', 'time_slot', 'district_id', 'gap'])
 
 
 def hash_table(order_data):
+    global cluster_map
     start_areas = order_data['start_district_hash']
     start_areas = start_areas.get_values()
     dest_areas = order_data['dest_district_hash']
@@ -111,16 +125,5 @@ def new_table(order_data):
     new_table = new_table.transpose()
     return new_table
 
-def write_list_to_csv(list1, outpath, header=False):
-    temp = pd.DataFrame(list1)
-    temp.to_csv(outpath, index=False, header=header)
-  
-if __name__ == '__main__':
-    new_tables =  []
-    for i in range(len(order_datas)):
-        print(i)
-        temp = new_table(order_datas[i])
-        # new_tables += temp
-        for line in temp:
-            new_tables.append(line)
-    write_list_to_csv(new_tables,'order_data.csv' )
+
+
