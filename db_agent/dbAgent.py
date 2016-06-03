@@ -10,7 +10,7 @@ PARAM_ERROR = 1
 NO_ARG = 2
 
 # Instruction Constant
-COMMAND_HELP = ['-i\tInput file name from where wanted to read the data (CSV)', '-c\tConfiguration file where all the information about the database and structure is contained']
+COMMAND_HELP = ['-i\tInput file name from where wanted to read the data (CSV)', '-c\tConfiguration file where all the information about the database and structure is contained', '-u\t Username of database', '-p\tPassword of the database']
 
 # Main user interface
 def main(argv):
@@ -18,12 +18,14 @@ def main(argv):
 		printError(NO_ARG)
 
 	try:
-		opts, args = getopt.getopt(argv, 'h:i:c', ['help', 'inputFile=', 'configFile='])
+		opts, args = getopt.getopt(argv, 'h:i:c:u:p', ['help', 'inputFile=', 'configFile=', 'username=', 'password='])
 	except getopt.GetoptError:
 		printError(OPTION_ERROR)
 
 	intputFile = ''
 	configFile = ''
+	userName = ''
+	password = ''
 
 	for opt, arg in opts:
 		 if opt in ('-h', '--help'):
@@ -32,6 +34,10 @@ def main(argv):
 		 	intputFile = arg
 		 elif opt in ('-c', '--config'):
 		 	configFile = arg
+		 elif opt in ('-u', '--username'):
+		 	userName = arg
+		 elif opt in ('-p', '--password'):
+		 	password = arg		
 		 else:
 		 	printError(PARAM_ERROR)
 
@@ -55,7 +61,7 @@ def printHelp():
 
 # Main insert data process
 def insertData(iFile, cFile):
-
+	print 'testing'
 
 if __name__ == '__main__':
 		main(sys.argv[1:])	
