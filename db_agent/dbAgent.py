@@ -1,10 +1,18 @@
 # MongoDb dependencies
 from pymongo import MongoClient
 
-import sys, getopt
+import sys, getopt, linecache
 
 # Agent Constants
 BLANK = ''
+
+# ConfigFile Constants
+C_HOST = 1
+C_DB_NAME = 2
+C_DOC_NAME = 3
+C_DOC_STRUCT = 4
+C_DOC_STRUCT_HEADER = 0
+C_DOC_STRUCT_TYPE = 1
 
 # Error Constants
 OPTION_ERROR = 0
@@ -63,11 +71,37 @@ def printError(errorType):
 def printHelp():
 	for help in COMMAND_HELP:
 		print help
+	sys.exit(2)
 
 # Main insert data process
 def insertData(iFile, cFile):
 	if iFile == BLANK or cFile == BLANK:
 		printError(MAND_ARG_MISSING)
 
+	dbHost = readConfig(cFile, C_HOST)
+	dbName = readConfig(cFile, C_DB_NAME)
+	tableName = readConfig(cFile, C_DOC_NAME)
+	tableStructure = readConfig(cFile, C_DOC_STRUCT)
+	print tableStructure
+
+# Read configFile and return information desired
+def readConfig(cFile, infoReq):
+	if infoReq < C_DOC_STRUCT:
+		linecache.clearcache()
+		return linecache.getline(cFile, infoReq)	
+	elif infoReq == C_DOC_STRUCT:
+		openF = open(cFile)
+		
+		tableStruct = []
+		iterator = 0
+		
+		for line in openF.readlines():
+			if iterator >= C_DOC_STRUCT:
+				tableStruct.append([line.split(',')[C_DOC_STRUCT_HEADER], line.split(',')[C_DOC_STRUCT_TYPE]])
+			iterator += 1		
+		openF.close()
+		return tableStruct
+
+		
 if __name__ == '__main__':
 		main(sys.argv[1:])	
