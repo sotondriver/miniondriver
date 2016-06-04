@@ -32,7 +32,7 @@ def get_time_slot(time):
     time = time.replace(' ', ':')
     time = time.replace('-', ':')
     time_list = time.split(':')
-    temp1 = time_list[1]+time_list[2]
+    temp1 = int(time_list[2])
     t1 = int(time_list[3])
     t2 = int(time_list[4])
     temp2 = (t1 * 6 + t2 / 10) + 1

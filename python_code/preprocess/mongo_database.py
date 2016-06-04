@@ -7,31 +7,29 @@ Created on 16/6/3 23:49 2016
 import pymongo
 import numpy as np
 from extend_function import *
-from main import CLUSTER_PATH, ORDER_IN_PATH, WEATHER_IN_PATH
-
-ORDER_NAMES = ['order_id', 'driver_id', 'passenger_id', 'start_district_hash',
-                'dest_district_hash', 'Price', 'Time']
-WEATHER_NAMES = ['Time', 'Weather', 'temprature', 'PM25']
+import main as m
 
 
-def save_data_into_mongodb(path, names):
-
+def save_data_into_mongodb(db, path, names, collection):
     temp_path1 = listdir_no_hidden(path)
     for p in temp_path1:
         temp_path2 = path+'/'+p
-        order_dict = pd.read_table(temp_path2, names=names).to_dict(orient='records')
-        db.raw_data.insert(order_dict)
-        print(p)
+        temp_dict = pd.read_table(temp_path2, names=names).to_dict(orient='records')
+        db.get_collection(collection).insert(temp_dict)
+        print('Insert file: '+p)
+
+def save_csv_into_mongodb(db, path, collection):
+    temp_dict = pd.read_table(path, header=0, delimiter=',').to_dict(orient='records')
+    db.get_collection(collection).insert(temp_dict)
 
 
 if __name__ == '__main__':
     client = pymongo.MongoClient("localhost", 27017)
     db = client.dididata
 
-    # district_dict = load_cluster_map(CLUSTER_PATH)
-    # db.cluster_map.insert_one(district_dict)
-    # save_data_into_mongodb(WEATHER_IN_PATH, WEATHER_NAMES)
-    a = db.raw_data.distinct("order_id").length
-    print(a)
-
+    # save the raw data into mongodb "dididata"
+    save_data_into_mongodb(db, m.WEATHER_IN_PATH, m.WEATHER_NAMES, collection='weather_data')
+    save_data_into_mongodb(db, m.ORDER_IN_PATH, m.ORDER_NAMES, collection='order_data')
+    save_csv_into_mongodb(db, m.TRAFFIC_OUT_PATH, collection='traffic_data')
+    save_csv_into_mongodb(db, m.POI_OUT_PATH, collection='poi_data')
     pass

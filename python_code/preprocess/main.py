@@ -28,15 +28,22 @@ WEATHER_OUT_PATH = PARENT_OUT_PATH + 'weather_data.csv'
 ORDER_IN_PATH = PARENT_IN_PATH + 'order_data'
 ORDER_OUT_PATH = PARENT_OUT_PATH + 'order_data.csv'
 
+ORDER_NAMES = ['order_id', 'driver_id', 'passenger_id', 'start_district_hash',
+               'dest_district_hash', 'Price', 'Time']
+WEATHER_NAMES = ['Time', 'Weather', 'temprature', 'PM25']
+TRAFFIC_NAMES = ['district_id', 'tj_class1', 'tj_class2', 'tj_class3', 'tj_class4', 'date', 'Time']
+
 def save_individual_csv():
     # the hash dictionary for the district map ID
     district_dict = load_cluster_map(CLUSTER_PATH)
 
     # save those csv file for the data cleaness
     save_traffic_data(district_dict, TRAFFIC_IN_PATH, TRAFFIC_OUT_PATH)
-    save_poi_data(district_dict, POI_IN_PATH, POI_OUT_PATH)
-    save_weather_data(WEATHER_IN_PATH, WEATHER_OUT_PATH)
-    save_order_data(ORDER_IN_PATH, ORDER_OUT_PATH, CLUSTER_PATH)
+    # save_poi_data(district_dict, POI_IN_PATH, POI_OUT_PATH)
+    # save_weather_data(WEATHER_IN_PATH, WEATHER_OUT_PATH)
+    # save_order_data(ORDER_IN_PATH, ORDER_OUT_PATH, CLUSTER_PATH)
+
 
 if __name__ == '__main__':
     save_individual_csv()
+
