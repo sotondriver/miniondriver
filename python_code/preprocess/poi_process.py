@@ -29,7 +29,8 @@ def load_poi(district_dict, path):
 
 def save_poi_data(district_dict, path_in, path_out):
     poi_list = load_poi(district_dict, path_in)
-    header = ['district_ID']
+    header = ['district_id']
     for i in range(1, 25+1, 1):
-        header.append('class'+str(i))
+        temp = '%02d'%i
+        header.append('class'+temp)
     write_list_to_csv(poi_list, path_out=path_out, header=header)

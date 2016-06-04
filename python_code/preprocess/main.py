@@ -38,8 +38,8 @@ def save_individual_csv():
     district_dict = load_cluster_map(CLUSTER_PATH)
 
     # save those csv file for the data cleaness
-    save_traffic_data(district_dict, TRAFFIC_IN_PATH, TRAFFIC_OUT_PATH)
-    # save_poi_data(district_dict, POI_IN_PATH, POI_OUT_PATH)
+    # save_traffic_data(district_dict, TRAFFIC_IN_PATH, TRAFFIC_OUT_PATH)
+    save_poi_data(district_dict, POI_IN_PATH, POI_OUT_PATH)
     # save_weather_data(WEATHER_IN_PATH, WEATHER_OUT_PATH)
     # save_order_data(ORDER_IN_PATH, ORDER_OUT_PATH, CLUSTER_PATH)
 

@@ -41,4 +41,4 @@ def get_time_slot(time):
 
 
 if __name__ == '__main__':
-    get_time_slot(time='2016-01-01 23:30:22')
+    print(get_time_slot(time='2016-01-01 23:30:22'))
