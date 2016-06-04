@@ -89,8 +89,7 @@ def insertData(iFile, cFile, uName, password):
 
 	# Read csv and insert into MongoDB
 	mongoConnection = MongoClient(dbHost.split(',')[C_HOST_ADDR], int(dbHost.split(',')[C_HOST_PORT]))
-	#mongoDatabase = mongoConnection[dbName]
-	mongoDatabase = mongoConnection.dbName
+	mongoDatabase = mongoConnection[dbName]
 	mongoCollection = mongoDatabase[tableName]
 
 	print mongoDatabase
@@ -115,7 +114,7 @@ def insertData(iFile, cFile, uName, password):
 # Read configFile and return information desired
 def readConfig(cFile, infoReq):
 	linecache.clearcache()
-	return linecache.getline(cFile, infoReq)	
+	return linecache.getline(cFile, infoReq).rstrip('\n')	
 		
 if __name__ == '__main__':
 		main(sys.argv[1:])	
