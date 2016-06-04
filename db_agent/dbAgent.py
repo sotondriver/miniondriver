@@ -19,6 +19,7 @@ OPTION_ERROR = 0
 PARAM_ERROR = 1
 NO_ARG = 2
 MAND_ARG_MISSING = 3
+READING_CONF_ERROR = 4
 
 # Instruction Constant
 COMMAND_HELP = ['-i\tInput file name from where wanted to read the data (CSV)', '-c\tConfiguration file where all the information about the database and structure is contained', '-u\t Username of database', '-p\tPassword of the database']
@@ -62,8 +63,10 @@ def printError(errorType):
 		print 'Parameters Error: One or more parameters are missing'	
 	elif errorType == NO_ARG:
 		print 'No arguments shutting down! Bye Bye!'
-	elif errorType ==MAND_ARG_MISSING:
+	elif errorType == MAND_ARG_MISSING:
 		print 'Mandatory arguments are missing!'
+	elif errorType == READING_CONF_ERROR:
+		print 'Error occurred while reading configuration file!'	
 
 	sys.exit(2)
 
@@ -101,6 +104,8 @@ def readConfig(cFile, infoReq):
 			iterator += 1		
 		openF.close()
 		return tableStruct
+	else:
+		printError(READING_CONF_ERROR)
 
 		
 if __name__ == '__main__':
