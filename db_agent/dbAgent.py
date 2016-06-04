@@ -106,7 +106,6 @@ def insertData(iFile, cFile, uName, password):
 		bar.update(iterator + 1)
 		mongoCollection.insert_one(entry)
 		iterator += 1
-		sleep(0.1)
 	bar.finish()
 	
 
