@@ -92,8 +92,7 @@ def insertData(iFile, cFile, uName, password):
 	mongoDatabase = mongoConnection[dbName]
 	mongoCollection = mongoDatabase[tableName]
 
-	print mongoDatabase
-
+	# Csv file reading
 	csvFile = open(iFile, 'r')
 	fileSize = open(iFile, 'r')
 	csvReader = csv.DictReader(csvFile)
