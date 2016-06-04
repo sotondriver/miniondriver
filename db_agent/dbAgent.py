@@ -1,18 +1,19 @@
 # MongoDb dependencies
 from pymongo import MongoClient
 
-import sys, getopt, linecache
+from time import sleep
+
+import sys, getopt, linecache, csv, progressbar
 
 # Agent Constants
 BLANK = ''
 
 # ConfigFile Constants
 C_HOST = 1
+C_HOST_ADDR = 0
+C_HOST_PORT = 1
 C_DB_NAME = 2
 C_DOC_NAME = 3
-C_DOC_STRUCT = 4
-C_DOC_STRUCT_HEADER = 0
-C_DOC_STRUCT_TYPE = 1
 
 # Error Constants
 OPTION_ERROR = 0
@@ -53,7 +54,7 @@ def main(argv):
 		 else:
 		 	printError(PARAM_ERROR)
 
-	insertData(intputFile, configFile)
+	insertData(intputFile, configFile, userName, password)
 
 # Prints errors 
 def printError(errorType):
@@ -77,36 +78,44 @@ def printHelp():
 	sys.exit(2)
 
 # Main insert data process
-def insertData(iFile, cFile):
+def insertData(iFile, cFile, uName, password):
 	if iFile == BLANK or cFile == BLANK:
 		printError(MAND_ARG_MISSING)
 
+	# Read configuration file
 	dbHost = readConfig(cFile, C_HOST)
 	dbName = readConfig(cFile, C_DB_NAME)
 	tableName = readConfig(cFile, C_DOC_NAME)
-	tableStructure = readConfig(cFile, C_DOC_STRUCT)
-	print tableStructure
+
+	# Read csv and insert into MongoDB
+	mongoConnection = MongoClient(dbHost.split(',')[C_HOST_ADDR], int(dbHost.split(',')[C_HOST_PORT]))
+	#mongoDatabase = mongoConnection[dbName]
+	mongoDatabase = mongoConnection.dbName
+	mongoCollection = mongoDatabase[tableName]
+
+	print mongoDatabase
+
+	csvFile = open(iFile, 'r')
+	fileSize = open(iFile, 'r')
+	csvReader = csv.DictReader(csvFile)
+	row_count = len(fileSize.readlines()) - 1
+
+	bar = progressbar.ProgressBar(maxval = row_count, widgets = [progressbar.Bar('=', '[', ']'), ' ', progressbar.Percentage()])
+	iterator = 0
+
+	bar.start()
+	for entry in csvReader:
+		bar.update(iterator + 1)
+		mongoCollection.insert_one(entry)
+		iterator += 1
+		sleep(0.1)
+	bar.finish()
+	
 
 # Read configFile and return information desired
 def readConfig(cFile, infoReq):
-	if infoReq < C_DOC_STRUCT:
-		linecache.clearcache()
-		return linecache.getline(cFile, infoReq)	
-	elif infoReq == C_DOC_STRUCT:
-		openF = open(cFile)
-		
-		tableStruct = []
-		iterator = 0
-		
-		for line in openF.readlines():
-			if iterator >= C_DOC_STRUCT:
-				tableStruct.append([line.split(',')[C_DOC_STRUCT_HEADER], line.split(',')[C_DOC_STRUCT_TYPE]])
-			iterator += 1		
-		openF.close()
-		return tableStruct
-	else:
-		printError(READING_CONF_ERROR)
-
+	linecache.clearcache()
+	return linecache.getline(cFile, infoReq)	
 		
 if __name__ == '__main__':
 		main(sys.argv[1:])	
