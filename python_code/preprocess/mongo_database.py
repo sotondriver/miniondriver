@@ -7,10 +7,8 @@ Created on 16/6/3 23:49 2016
 import csv
 
 import pymongo
-import numpy as np
 from extend_function import *
 import main as m
-import bson.code as Code
 
 
 def connect_mongodb():
