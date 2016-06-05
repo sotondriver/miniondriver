@@ -53,8 +53,6 @@ def clean_temp_dict(temp_dict, district_dict):
         elif id_flag is None:
             entry['dest_district_hash'] = 0
         entry['ed_district_id'] = entry.pop('dest_district_hash')
-
-
         count += 1
         if count%100000 == 0:
             print(count)
