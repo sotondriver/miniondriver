@@ -6,6 +6,7 @@ Created on 16/6/3 00:22 2016
 """
 from extend_function import *
 import numpy as np
+import operator
 
 
 def load_traffic_data(district_dict, path):
@@ -29,6 +30,7 @@ def load_traffic_data(district_dict, path):
                         time_slot = get_time_slot(line_list[i])
                 temp_list = [line_list[0]] + list(traffic_class) + list(time_slot)
                 traffic_list.append(temp_list)
+    traffic_list = sorted(traffic_list, key=operator.itemgetter(0))
     return traffic_list
 
 

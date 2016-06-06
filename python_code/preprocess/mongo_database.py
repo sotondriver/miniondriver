@@ -5,6 +5,9 @@ Created on 16/6/3 23:49 2016
 @author: harry sun
 """
 import csv
+from operator import itemgetter
+
+import numpy as np
 
 import pymongo
 from extend_function import *
@@ -13,7 +16,7 @@ import main as m
 
 def connect_mongodb():
     client = pymongo.MongoClient("localhost", 27017)
-    db = client.dididata
+    db = client.didi_clean_data
     return db
 
 
@@ -23,9 +26,15 @@ def save_data_into_mongodb(db, path, names, collection, clean=False):
     for p in temp_path1:
         temp_path2 = path+'/'+p
         temp_dict = pd.read_table(temp_path2, names=names).to_dict(orient='records')
+        temp_dict1 = temp_dict
         if clean == True:
-            clean_temp_dict(temp_dict, district_dict)
-        db.get_collection(collection).insert(temp_dict)
+            temp_dict1 = clean_temp_dict(temp_dict, district_dict)
+        for id in range(1, 66 + 1, 1):
+            value_list = map(itemgetter('st_district_id'), temp_dict1)
+            idx = np.where(np.array(value_list) == id)[0]
+            temp = itemgetter(*idx)(temp_dict1)
+            db.get_collection(p+'district'+str(id)).insert(temp)
+            print('district'+str(id))
         print('Insert file: '+p)
 
 
@@ -54,7 +63,7 @@ def clean_temp_dict(temp_dict, district_dict):
         count += 1
         if count%100000 == 0:
             print(count)
-    pass
+    return temp_dict
 
 
 if __name__ == '__main__':

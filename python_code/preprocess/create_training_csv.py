@@ -16,10 +16,16 @@ count = 0
 total_list = []
 for district_idx in range(1, 66, 1):
 
+    order_db = []
+    traffic_db = []
+
     poi_db = db.poi_data.find_one({'district_id':district_idx})
-    order_db = db.order_data.find({'st_district_id': district_idx}, no_cursor_timeout=True)
-    order_db_count = order_db.count()
-    traffic_db = db.traffic_data.find({'district_ID': district_idx}, no_cursor_timeout=True)
+    order_cursor = db.order_data.find({'st_district_id': district_idx}, no_cursor_timeout=True)
+    for entry1 in order_cursor:
+        order_db.append(entry1)
+    traffic_cursor = db.traffic_data.find({'district_ID': district_idx}, no_cursor_timeout=True)
+    for entry2 in traffic_cursor:
+        traffic_db.append(entry2)
 
     # for poi data
     del poi_db['_id']
@@ -33,8 +39,7 @@ for district_idx in range(1, 66, 1):
             no_ed_district_id_count = 0
             order_count = 0
 
-            for i in range(order_db_count):
-                order_entry =  order_db.next()
+            for order_entry in order_db:
                 if (order_entry['date'] == date_idx) & (order_entry['time_slot'] == time_slot_idx):
                     order_count += 1
                     if len(str(order_entry['driver_id'])) < 5:
@@ -45,12 +50,14 @@ for district_idx in range(1, 66, 1):
             # for traffic data
             temp_traffic_array = np.zeros(4, dtype='int')
             for traffic_entry in traffic_db:
-                if (traffic_entry['date'] == date_idx) & (traffic_entry['time_slot'] == time_slot_idx):
-                    del traffic_entry['_id']
-                    del traffic_entry['district_ID']
-                    del traffic_entry['time_slot']
-                    del traffic_entry['date']
-                    temp_traffic_array = np.vstack([temp_traffic_array, list(traffic_entry.values())])
+                if traffic_entry.has_key('date'):
+                    if (traffic_entry['date'] == date_idx) & (traffic_entry['time_slot'] == time_slot_idx):
+                        temp_traffic_entry = traffic_entry
+                        del temp_traffic_entry['_id']
+                        del temp_traffic_entry['district_ID']
+                        del temp_traffic_entry['time_slot']
+                        del temp_traffic_entry['date']
+                        temp_traffic_array = np.vstack([temp_traffic_array, list(temp_traffic_entry.values())])
             t = temp_traffic_array.shape
             if len(t) > 1 :
                 traffic_list = np.mean(temp_traffic_array, axis=0).tolist()

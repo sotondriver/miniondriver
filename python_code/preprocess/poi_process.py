@@ -6,7 +6,7 @@ Created on 16/6/3 00:22 2016
 """
 from extend_function import write_list_to_csv
 import numpy as np
-
+import operator
 
 def load_poi(district_dict, path):
     poi_list = []
@@ -24,6 +24,7 @@ def load_poi(district_dict, path):
                 poi_1class_num = int(splitted[-1])
                 poi_1class[poi_1class_ind-1] += poi_1class_num
             poi_list.append([line_list[0]] + list(poi_1class))
+    poi_list = sorted(poi_list, key=operator.itemgetter(0))
     return poi_list
 
 

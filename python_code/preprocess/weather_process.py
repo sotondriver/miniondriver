@@ -4,10 +4,11 @@ Created on Wed Jun 01 00:11:48 2016
 
 @author: abulin
 """
-
-
 import os
 import pandas as pd
+import operator
+
+
 def MakeWeatherTable(root):
     Table = []
     Root = []
@@ -34,6 +35,7 @@ def MakeWeatherTable(root):
                 w = words[2]
                 words[2] = w
                 Table.append(words)
+    Table = sorted(Table, key=operator.itemgetter(0, 1))
     return Table
 
 def save_weather_data(path_in, path_out):
