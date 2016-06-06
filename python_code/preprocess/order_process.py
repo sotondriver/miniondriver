@@ -9,7 +9,7 @@ import pandas as pd
 import numpy as np
 import os
 
-root ='training_data/order_data'
+root ='../../training_data/order_data'
 Root = []
 order_datas = []
 for path, subdirs, files in os.walk(root):
@@ -17,8 +17,8 @@ for path, subdirs, files in os.walk(root):
             finalPath = './' + path + '/' + name
             Root.append(finalPath)
     
-cluster_map = pd.read_table('training_data/cluster_map/cluster_map', names=['district_hash', 'district_id'])
-order_data = pd.read_table('training_data/order_data/order_data_2016-01-04', names=['order_id', 'driver_id','passenger_id','start_district_hash','dest_district_hash','Price','Time'])
+cluster_map = pd.read_table('../../training_data/cluster_map/cluster_map', names=['district_hash', 'district_id'])
+order_data = pd.read_table('../../training_data/order_data/order_data_2016-01-04', names=['order_id', 'driver_id','passenger_id','start_district_hash','dest_district_hash','Price','Time'])
 
 for i in range(len(Root)):
     print i
@@ -123,4 +123,4 @@ for i in range(len(order_datas)):
     new_tables.extend(new_table(order_datas[i],i)) 
 header = ['date','total_order_number','time_slot','area_number','gap']
 
-write_list_to_csv(new_tables,outpath='/Users/yx/Desktop/season_1/code/order_data.csv',header=header )
+write_list_to_csv(new_tables,outpath='../../processed_data/order_data.csv',header=header )
