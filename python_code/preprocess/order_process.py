@@ -7,7 +7,6 @@ Created on Thu Jun  2 15:47:39 2016
 
 import pandas as pd
 import numpy as np
-import hashlib
 import os
 
 from extend_function import write_list_to_csv
