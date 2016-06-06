@@ -6,6 +6,7 @@ Created on 16/6/3 00:22 2016
 """
 from extend_function import *
 import numpy as np
+import operator
 
 
 def load_traffic_data(district_dict, path):
@@ -29,6 +30,7 @@ def load_traffic_data(district_dict, path):
                         time_slot = get_time_slot(line_list[i])
                 temp_list = [line_list[0]] + list(traffic_class) + list(time_slot)
                 traffic_list.append(temp_list)
+    traffic_list = sorted(traffic_list, key=operator.itemgetter(0))
     return traffic_list
 
 
@@ -36,6 +38,6 @@ def save_traffic_data(district_dict, path_in, path_out):
     traffic_list = load_traffic_data(district_dict, path_in)
     header = ['district_ID']
     for i in range(1, 4 + 1, 1):
-        header.append('traffic_jam_class' + str(i))
+        header.append('tj_class' + str(i))
     header += ['date', 'time_slot']
     write_list_to_csv(traffic_list, path_out=path_out, header=header)

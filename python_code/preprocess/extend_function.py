@@ -22,7 +22,9 @@ def write_list_to_csv(list1, path_out, header=False):
 
 
 def load_cluster_map(path):
-    table = pd.read_table(path, names=['district hash', 'district_id'])
+    temp_path = listdir_no_hidden(path)
+    temp_path = path + '/' + temp_path[0]
+    table = pd.read_table(temp_path, names=['district hash', 'district_id'])
     array = table.get_values()
     district_dict = {array[i][0]: array[i][1] for i in range(0, len(array), 1)}
     return district_dict
@@ -32,7 +34,7 @@ def get_time_slot(time):
     time = time.replace(' ', ':')
     time = time.replace('-', ':')
     time_list = time.split(':')
-    temp1 = time_list[1]+time_list[2]
+    temp1 = int(time_list[2])
     t1 = int(time_list[3])
     t2 = int(time_list[4])
     temp2 = (t1 * 6 + t2 / 10) + 1
@@ -41,4 +43,5 @@ def get_time_slot(time):
 
 
 if __name__ == '__main__':
-    get_time_slot(time='2016-01-01 23:30:22')
+    print(get_time_slot(time='2016-01-01 23:30:22'))
+    pass
