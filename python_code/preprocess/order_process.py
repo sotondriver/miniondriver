@@ -9,37 +9,23 @@ import pandas as pd
 import numpy as np
 import os
 
-from extend_function import write_list_to_csv
+root ='training_data/order_data'
+Root = []
+order_datas = []
+for path, subdirs, files in os.walk(root):
+        for name in files:
+            finalPath = './' + path + '/' + name
+            Root.append(finalPath)
+    
+cluster_map = pd.read_table('training_data/cluster_map/cluster_map', names=['district_hash', 'district_id'])
+order_data = pd.read_table('training_data/order_data/order_data_2016-01-04', names=['order_id', 'driver_id','passenger_id','start_district_hash','dest_district_hash','Price','Time'])
 
-
-cluster_map = []
-
-def save_order_data(path_in, path_out, cluster_path):
-    global cluster_map
-    root = path_in
-    Root = []
-    order_datas = []
-    for path, subdirs, files in os.walk(root):
-            for name in files:
-                finalPath = './' + path + '/' + name
-                Root.append(finalPath)
-
-    for i in range(len(Root)):
-        print('Read File NO. ' + str(i))
-        order_datas.append(pd.read_table(Root[i], names=['order_id', 'driver_id', 'passenger_id', 'start_district_hash',
-                                                'dest_district_hash', 'Price', 'Time']))
-
-    cluster_map = pd.read_table(cluster_path, names=['district_hash', 'district_id'])
-    new_tables = []
-    for i in range(len(order_datas)):
-        print('Process File NO. '+str(i))
-        new_tables.extend(new_table(order_datas[i]))
-
-    write_list_to_csv(new_tables, path_out, header=['total_orders', 'time_slot', 'district_id', 'gap'])
+for i in range(len(Root)):
+    print i
+    order_datas.append(pd.read_table(Root[i], names=['order_id', 'driver_id','passenger_id','start_district_hash','dest_district_hash','Price','Time']))
 
 
 def hash_table(order_data):
-    global cluster_map
     start_areas = order_data['start_district_hash']
     start_areas = start_areas.get_values()
     dest_areas = order_data['dest_district_hash']
@@ -51,10 +37,10 @@ def hash_table(order_data):
     dict = {k:v for k, v in zip(keys, values)}
 
     for i in range(len(order_data['start_district_hash'])):
-        if dict.has_key(dest_areas[i]) == True:
-            start_areas[i] = dict[start_areas[i]]
-        else:
-            start_areas[i] = 0
+#        if dict.has_key(dest_areas[i]) == True:
+        start_areas[i] = dict[start_areas[i]]
+#        else:
+#            start_areas[i] = 0
         
     for j in range(len(order_data['dest_district_hash'])):
         if dict.has_key(dest_areas[j]) == True:
@@ -89,7 +75,7 @@ def calculate_gap(order_data):
             gap_one[i] = 1
     return gap_one
     
-def new_table(order_data):
+def new_table(order_data,day):
     start_areas,dest_areas = hash_table(order_data)    
     start_areas = start_areas.astype(int)  
     dest_areas = dest_areas.astype(int)
@@ -112,17 +98,29 @@ def new_table(order_data):
     time_number = []
     area_number = []
     gap_number = []
+    day_number = []
     for i in range(1,145):
         area = order_data[order_data[:,4] == i]
-        for j in range(67):
+        for j in range(1,67):
             area_i = area[area[:,1] == j]
             order_number.append(len(area_i))
             time_number.append(i)
             area_number.append(j)
             gap_number.append(len(area_i[area_i[:,0] == 0]))
-    new_table = np.array([order_number,time_number,area_number,gap_number])
+            day_number.append(day+1)
+    new_table = np.array([day_number,order_number,time_number,area_number,gap_number])
     new_table = new_table.transpose()
     return new_table
 
+def write_list_to_csv(list1, outpath, header):
+    temp = pd.DataFrame(list1)
+    temp.to_csv(outpath, index=False, header=header)
+  
+#new_tables = new_table(order_data,0)  
+new_tables =  []
+for i in range(len(order_datas)):
+    print i
+    new_tables.extend(new_table(order_datas[i],i)) 
+header = ['date','total_order_number','time_slot','area_number','gap']
 
-
+write_list_to_csv(new_tables,outpath='/Users/yx/Desktop/season_1/code/order_data.csv',header=header )
