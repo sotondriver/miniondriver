@@ -6,9 +6,7 @@ Created on 16/6/3 23:49 2016
 """
 import csv
 from operator import itemgetter
-
 import numpy as np
-
 import pymongo
 from extend_function import *
 import main as m
@@ -16,7 +14,7 @@ import main as m
 
 def connect_mongodb():
     client = pymongo.MongoClient("localhost", 27017)
-    db = client.didi_clean_data
+    db = client.dididata
     return db
 
 
