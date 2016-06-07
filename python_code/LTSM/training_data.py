@@ -14,7 +14,7 @@ import theano.tensor as T
 
 layers = [66, 128, 300, 128, 66]
 data_dim = 66
-timesteps = 3
+timesteps = 10
 
 model = Sequential()
 
@@ -27,7 +27,7 @@ model.add(Dropout(0.5))
 # model.add(LSTM(128, return_sequences=True))
 # model.add(Dropout(0.25))
 
-model.add(TimeDistributedDense(input_dim=3, output_dim=1))
+model.add(TimeDistributedDense(input_dim=timesteps, output_dim=1))
 
 model.add(Flatten())
 
@@ -65,7 +65,7 @@ def _load_data(path):
     return temp_data
 
 
-def _construct_data(data, n_prev = 3):
+def _construct_data(data, n_prev = 10):
     """
     data should be pd.DataFrame()
     """
@@ -109,7 +109,7 @@ def custom_objective(y_true, y_pred):
 
 if __name__ == '__main__':
     data = _load_data(path)
-    model.compile(loss='mean_squared_error', optimizer='Adam', metrics=['accuracy'])
+    model.compile(loss='mean_absolute_percentage_error', optimizer='Adam', metrics=['accuracy'])
     (X_train, y_train), (X_test, y_test) = train_test_split(data)
     t = X_train.shape[1:]
     model.fit(X_train, y_train, batch_size=100, nb_epoch=100, validation_split=0.1)
