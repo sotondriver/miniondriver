@@ -4,8 +4,7 @@ Created on 16/6/6 21:32 2016
 
 @author: harry sun
 """
-import timeit
-
+import time
 import keras
 from keras.models import Sequential
 from keras.layers.core import Dense, Activation, Dropout, TimeDistributedDense, Flatten
@@ -95,25 +94,25 @@ def return_mape(predict_result, true_result):
 
 
 def multi_model(x_train, y_train, x_test, y_test):
-    activator_list = ['linear', 'sigmoid', 'tanh']
+    activator_list = ['linear', 'tanh']
     mape_list = []
     for district_id in range(66):
         mape_entry = []
         model_list = []
         temp_x_train, temp_y_train = clean_data(x_train, y_train[..., district_id])
         temp_x_test, temp_y_test = clean_data(x_test, y_test[..., district_id])
-        start = timeit.timeit()
+        start = time.time()
         for activator in activator_list:
             model = initial_lstm_model(activator=activator)
             model = train_model(model, temp_x_train, temp_y_train)
             predicted = model.predict(temp_x_test)
             model_list.append(model)
             mape_entry.append(return_mape(predicted, temp_y_test))
-        end = timeit.timeit()
+        end = time.time()
         best_idx = mape_entry.index(min(mape_entry))
         best_model = model_list[best_idx]
-        best_model.save_weights(MODEL_OUT_PATH+'model_district_'+str(district_id)+'.h5', overwrite=True)
-        print('District: '+str(district_id)+' '+str(mape_entry)+' Choose: '+activator_list[best_idx])
+        best_model.save_weights(MODEL_OUT_PATH+'model_district_'+str(district_id+1)+'.h5', overwrite=True)
+        print('District: '+str(district_id+1)+' '+str(mape_entry)+' Choose: '+activator_list[best_idx])
         print(' Time: '+str(end-start))
         mape_list.append([mape_entry[best_idx]] + [activator_list[best_idx]])
     return mape_list
@@ -126,6 +125,6 @@ if __name__ == '__main__':
     label_list_str = label_data_str.readlines()
     (train_data, train_label), (test_data, test_label) = train_test_split(train_list_str, label_list_str)
     mape = multi_model(train_data, train_label, test_data, test_label)
-    out_path = PARENT_OUT_PATH + 'LSTM_MAPE_list.csv'
+    out_path = MODEL_OUT_PATH + 'LSTM_MAPE_list.csv'
     write_list_to_csv(mape, out_path)
     print 'overall mape loss: %f\n' % (mape_sum / mape_num)
