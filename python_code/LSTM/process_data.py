@@ -54,6 +54,7 @@ def train_test_split(train_list, label_list, test_size=0.2):
     data_ = range(len(train_list))
     label_ = range(len(train_list))
     shuffle_idx = range(len(train_list))
+    np.random.seed(641)
     np.random.shuffle(shuffle_idx)
     for i in range(len(shuffle_idx)):
         idx_ = shuffle_idx[i]
