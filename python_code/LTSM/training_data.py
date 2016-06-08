@@ -11,6 +11,8 @@ from keras.models import Sequential
 from keras.layers.core import Dense, Activation, Dropout, TimeDistributedDense, Flatten
 from keras.layers.recurrent import LSTM
 from keras.regularizers import l2, activity_l2
+import theano.tensor as T
+from keras import backend as K
 
 
 PARENT_OUT_PATH = '../../processed_data/'
@@ -29,7 +31,7 @@ def _construct_Xdata(data):
         matrix = []
         entry = entry[0]
         entry = entry.split(',')
-        entry =  map(float, entry)
+        entry =  map(int, entry)
         time = entry[0]
         matrix.append([time-3] + entry[1:67])
         matrix.append([time-2] + entry[67:133])
@@ -46,10 +48,16 @@ def _construct_ydata(data):
     for entry in data1:
         entry = entry[0]
         entry = entry.split(',')
-        entry = map(float, entry)
+        entry = map(int, entry)
         temp.append(entry)
     data_out = np.array(temp)
     return data_out
+
+def clean_data(x, y):
+    non_zero_idx = np.where(y > 0)[0]
+    x_out = x[non_zero_idx]
+    y_out = y[non_zero_idx]
+    return x_out, y_out
 
 def train_test_split(train_list, label_list, test_size=0.1):
     """
@@ -76,6 +84,18 @@ def train_test_split(train_list, label_list, test_size=0.1):
 
     return (X_train, y_train), (X_test, y_test)
 
+def mape(y_true, y_pred):
+    t = K.eval(y_true.shape[0])
+    # t = K.shape(y_true[y_true != 0])
+    idx = K.batch_get_value(K.argmin(y_true, axis=-1))
+    temp_y_true = y_true[y_true != 0]
+    temp_y_pred = y_pred[y_pred > 1.0e-9]
+    # diff = T.abs_((y_true - y_pred) / T.clip(T.abs_(y_true), 1.0e-9, np.inf))
+    diff = T.abs_((temp_y_true - temp_y_pred) / T.abs_(temp_y_true))
+    temp = T.mean(diff, axis=-1)
+    return temp
+
+
 def predict_by_LSTM(X_train, y_train, X_test, y_test, id):
     data_dim = 67
     timesteps = 3
@@ -87,20 +107,20 @@ def predict_by_LSTM(X_train, y_train, X_test, y_test, id):
     # model.add(Dropout(0.5))
     # model.add(Activation("linear"))
 
-    model.add(LSTM(128, input_shape=(timesteps, data_dim), return_sequences=True))
+    model.add(LSTM(128, input_shape=(timesteps, data_dim), return_sequences=True, W_regularizer=l2(0.05)))
     model.add(Activation(activator))
-    model.add(Dropout(0.25))
+    model.add(Dropout(0.5))
     model.add(TimeDistributedDense(input_dim=timesteps, output_dim=1))
     #
-    model.add(LSTM(256, return_sequences=True))
+    model.add(LSTM(64, return_sequences=True, W_regularizer=l2(0.05)))
     model.add(Activation(activator))
-    model.add(Dropout(0.25))
+    model.add(Dropout(0.5))
     model.add(TimeDistributedDense(input_dim=timesteps, output_dim=1))
-
-    model.add(LSTM(128, return_sequences=True))
-    model.add(Activation(activator))
-    model.add(Dropout(0.25))
-    model.add(TimeDistributedDense(input_dim=timesteps, output_dim=1))
+    #
+    # model.add(LSTM(128, return_sequences=True))
+    # model.add(Activation(activator))
+    # model.add(Dropout(0.25))
+    # model.add(TimeDistributedDense(input_dim=timesteps, output_dim=1))
 
     # model.add(LSTM(32, return_sequences=True))
     # model.add(Activation(activator))
@@ -108,39 +128,38 @@ def predict_by_LSTM(X_train, y_train, X_test, y_test, id):
 
     model.add(Flatten())
 
-    model.add(Dense(128))
+    model.add(Dense(64, W_regularizer=l2(0.1), activity_regularizer=activity_l2(0.1)))
     model.add(Dropout(0.5))
     model.add(Activation(activator))
     # #
-    model.add(Dense(66))
+    model.add(Dense(32, W_regularizer=l2(0.1), activity_regularizer=activity_l2(0.1)))
     model.add(Dropout(0.25))
     model.add(Activation(activator))
     # # #
-    # model.add(Dense(16))
-    # model.add(Dropout(0.25))
-    # model.add(Activation(activator))
-    #
-    # model.add(Dense(1))
-    # model.add(Activation(activator))
+    model.add(Dense(16, W_regularizer=l2(0.1), activity_regularizer=activity_l2(0.1)))
+    model.add(Dropout(0.25))
+    model.add(Activation(activator))
+
+    model.add(Dense(1, W_regularizer=l2(0.1), activity_regularizer=activity_l2(0.1)))
+    model.add(Activation(activator))
 
     optimizer = keras.optimizers.Adam(lr=0.2, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
     # model.compile(loss='mape', optimizer='Adam', metrics=['accuracy'])
     model.compile(loss='mape', optimizer=optimizer)
 
-    model.fit(X_train, y_train, batch_size=100, nb_epoch=40)
-    # model.fit(X_train, y_train, verbose=False, batch_size=500, nb_epoch=40)
+    # model.fit(X_train, y_train, batch_size=100, nb_epoch=40)
+    model.fit(X_train, y_train, verbose=False, batch_size=500, nb_epoch=40)
     predicted = model.predict(X_test)
 
-    predict_result = predicted
+    predict_result = predicted[0]
     test_label = y_test
     a = np.abs(test_label - predict_result)
     sum_ = 0
     num_ = 0
-    for i in range(predict_result.shape[0]):
-        for j in range(predict_result.shape[1]):
-            if (test_label[i, j] != 0):
-                sum_ = sum_ + a[i, j] / test_label[i, j]
-                num_ = num_ + 1
+    for j in range(len(predict_result)):
+        if test_label[j] != 0:
+            sum_ = sum_ + a[j] / test_label[j]
+            num_ = num_ + 1
     if num_ == 0:
         print('District:'+str(id+1)+' No num')
     else:
@@ -156,12 +175,11 @@ if __name__ == '__main__':
     train_list = train_data.readlines()
     label_list = label_data.readlines()
     (X_train, y_train), (X_test, y_test) = train_test_split(train_list, label_list)
-    # for i in range(66):
-    #     i = 51
-    #     temp_y_train = y_train[...,i]
-    #     temp_y_test = y_test[...,i]
-    #     sum_, num_= predict_by_LSTM(X_train, temp_y_train, X_test, temp_y_test, i)
-    #     temp_sum_ += sum_
-    #     temp_num_ += num_
-    predict_by_LSTM(X_train, y_train, X_test, y_test, 1)
+    for i in range(66):
+        temp_X_train, temp_y_train = clean_data(X_train, y_train[..., i])
+        temp_X_test, temp_y_test = clean_data(X_test, y_test[..., i])
+        sum_, num_= predict_by_LSTM(temp_X_train, temp_y_train, temp_X_test, temp_y_test, i)
+        temp_sum_ += sum_
+        temp_num_ += num_
+    # predict_by_LSTM(X_train, y_train, X_test, y_test, 1)
     print 'mape loss: %f\n' % (temp_sum_ / temp_num_)
