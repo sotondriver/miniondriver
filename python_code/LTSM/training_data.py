@@ -13,6 +13,7 @@ from keras.layers.recurrent import LSTM
 from keras.regularizers import l2, activity_l2
 import theano.tensor as T
 from keras import backend as K
+from extend_function import write_list_to_csv
 
 
 PARENT_OUT_PATH = '../../processed_data/'
@@ -59,7 +60,7 @@ def clean_data(x, y):
     y_out = y[non_zero_idx]
     return x_out, y_out
 
-def train_test_split(train_list, label_list, test_size=0.1):
+def train_test_split(train_list, label_list, test_size=0.2):
     """
     This just splits data to training and testing parts
     """
@@ -109,12 +110,12 @@ def predict_by_LSTM(X_train, y_train, X_test, y_test, id):
 
     model.add(LSTM(128, input_shape=(timesteps, data_dim), return_sequences=True, W_regularizer=l2(0.05)))
     model.add(Activation(activator))
-    model.add(Dropout(0.5))
+    model.add(Dropout(0.25))
     model.add(TimeDistributedDense(input_dim=timesteps, output_dim=1))
     #
     model.add(LSTM(64, return_sequences=True, W_regularizer=l2(0.05)))
     model.add(Activation(activator))
-    model.add(Dropout(0.5))
+    model.add(Dropout(0.25))
     model.add(TimeDistributedDense(input_dim=timesteps, output_dim=1))
     #
     # model.add(LSTM(128, return_sequences=True))
@@ -129,7 +130,7 @@ def predict_by_LSTM(X_train, y_train, X_test, y_test, id):
     model.add(Flatten())
 
     model.add(Dense(64, W_regularizer=l2(0.1), activity_regularizer=activity_l2(0.1)))
-    model.add(Dropout(0.5))
+    model.add(Dropout(0.25))
     model.add(Activation(activator))
     # #
     model.add(Dense(32, W_regularizer=l2(0.1), activity_regularizer=activity_l2(0.1)))
@@ -147,8 +148,8 @@ def predict_by_LSTM(X_train, y_train, X_test, y_test, id):
     # model.compile(loss='mape', optimizer='Adam', metrics=['accuracy'])
     model.compile(loss='mape', optimizer=optimizer)
 
-    # model.fit(X_train, y_train, batch_size=100, nb_epoch=40)
-    model.fit(X_train, y_train, verbose=False, batch_size=500, nb_epoch=40)
+    # model.fit(X_train, y_train, batch_size=32, nb_epoch=40)
+    model.fit(X_train, y_train, verbose=False, batch_size=32, nb_epoch=40)
     predicted = model.predict(X_test)
 
     predict_result = predicted[0]
@@ -160,16 +161,13 @@ def predict_by_LSTM(X_train, y_train, X_test, y_test, id):
         if test_label[j] != 0:
             sum_ = sum_ + a[j] / test_label[j]
             num_ = num_ + 1
-    if num_ == 0:
-        print('District:'+str(id+1)+' No num')
-    else:
-        print('District:'+str(id+1)+' '+str(sum_ / num_))
+    print('District:'+str(id+1)+' '+str(sum_ / num_))
     return sum_, num_
 
 if __name__ == '__main__':
+    mape_list = []
     temp_sum_ = 0
     temp_num_ = 0
-    temp_b_ = 0
     train_data = open(train_path)
     label_data = open(label_path)
     train_list = train_data.readlines()
@@ -179,7 +177,9 @@ if __name__ == '__main__':
         temp_X_train, temp_y_train = clean_data(X_train, y_train[..., i])
         temp_X_test, temp_y_test = clean_data(X_test, y_test[..., i])
         sum_, num_= predict_by_LSTM(temp_X_train, temp_y_train, temp_X_test, temp_y_test, i)
+        mape_list.append(sum_/num_)
         temp_sum_ += sum_
         temp_num_ += num_
+    write_list_to_csv(mape_list, 'mape_list.csv')
     # predict_by_LSTM(X_train, y_train, X_test, y_test, 1)
     print 'mape loss: %f\n' % (temp_sum_ / temp_num_)
