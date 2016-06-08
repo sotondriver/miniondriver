@@ -16,7 +16,8 @@ PARENT_OUT_PATH = '../../processed_data/'
 train_path = PARENT_OUT_PATH + 'didi_train_data.csv'
 label_path = PARENT_OUT_PATH + 'didi_train_label.csv'
 
-def train_LSTM_model(X_train, y_train, activator):
+
+def train_lstm_model(x_train, y_train, activator):
     data_dim = 67
     timesteps = 3
 
@@ -67,32 +68,33 @@ def train_LSTM_model(X_train, y_train, activator):
     model.compile(loss='mape', optimizer=optimizer)
 
     # model.fit(X_train, y_train, batch_size=32, nb_epoch=40)
-    model.fit(X_train, y_train, verbose=False, batch_size=32, nb_epoch=40)
+    model.fit(x_train, y_train, verbose=False, batch_size=32, nb_epoch=40)
 
     return model
 
-def return_mape(predict_result, true_result):
-    predict_result = predict_result[0]
-    test_label = true_result
-    a = np.abs(test_label - predict_result)
-    sum_ = 0
-    num_ = 0
-    for j in range(len(predict_result)):
-        if test_label[j] != 0:
-            sum_ = sum_ + a[j] / test_label[j]
-            num_ = num_ + 1
-    return sum_/num_
 
-def multi_model(X_train, y_train, X_test, y_test):
+def return_mape(predict_result, true_result):
+    predict_result1 = predict_result[0]
+    a = np.abs(true_result - predict_result1)
+    _sum = 0
+    _num = 0
+    for j in range(len(predict_result1)):
+        if true_result[j] != 0:
+            _sum = _sum + a[j] / true_result[j]
+            _num += 1
+    return _sum/_num
+
+
+def multi_model(x_train, y_train, x_test, y_test):
     activator_list = ['linear', 'sigmoid', 'tanh', 'hard_sigmoid']
     mape_list = []
-    for id in range(66):
-        mape_entry = [id+1]
-        temp_X_train, temp_y_train = clean_data(X_train, y_train[..., id])
-        temp_X_test, temp_y_test = clean_data(X_test, y_test[..., id])
+    for district_id in range(66):
+        mape_entry = [district_id+1]
+        temp_x_train, temp_y_train = clean_data(x_train, y_train[..., district_id])
+        temp_x_test, temp_y_test = clean_data(x_test, y_test[..., district_id])
         for activator in activator_list:
-            model = train_LSTM_model(temp_X_train, temp_y_train, activator=activator)
-            predicted = model.predict(temp_X_test)
+            model = train_lstm_model(temp_x_train, temp_y_train, activator=activator)
+            predicted = model.predict(temp_x_test)
             mape_entry.append(return_mape(predicted, temp_y_test))
         print('District: '+str(mape_entry))
         mape_list.append(mape_entry)
@@ -100,13 +102,11 @@ def multi_model(X_train, y_train, X_test, y_test):
 
 
 if __name__ == '__main__':
-    temp_sum_ = 0
-    temp_num_ = 0
-    train_data = open(train_path)
-    label_data = open(label_path)
-    train_list = train_data.readlines()
-    label_list = label_data.readlines()
-    (X_train, y_train), (X_test, y_test) = train_test_split(train_list, label_list)
-    mape_list = multi_model(X_train, y_train, X_test, y_test)
-    write_list_to_csv(mape_list, 'LSTM_mape_list.csv', header=['district_id','linear', 'sigmoid', 'tanh', 'hard_sigmoid'])
+    train_data_str = open(train_path)
+    label_data_str = open(label_path)
+    train_list_str = train_data_str.readlines()
+    label_list_str = label_data_str.readlines()
+    (train_data, train_label), (test_data, test_label) = train_test_split(train_list_str, label_list_str)
+    mape = multi_model(train_data, train_label, test_data, test_label)
+    write_list_to_csv(mape, 'LSTM_mape_list.csv', header=['district_id', 'linear', 'sigmoid', 'tanh', 'hard_sigmoid'])
     # print 'mape loss: %f\n' % (temp_sum_ / temp_num_)
