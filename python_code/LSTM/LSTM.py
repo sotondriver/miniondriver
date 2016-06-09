@@ -16,9 +16,9 @@ from extend_function import write_list_to_csv
 from process_data import *
 
 seed = 5
-batch_size = 500
+batch_size = 32
 PARENT_IN_PATH = '../../processed_data/'
-MODEL_OUT_PATH = '../../result/batch_size/attempt'+str(batch_size)+'/'
+MODEL_OUT_PATH = '../../result/attempt5'+'_batch_size_'+str(batch_size)+'/'
 train_path = PARENT_IN_PATH + 'didi_train_data.csv'
 label_path = PARENT_IN_PATH + 'didi_train_label.csv'
 mape_sum = 0
@@ -77,14 +77,13 @@ def initial_lstm_model(activator):
     return model
 
 
-def train_model(model, x_train, y_train, x_test, y_test):
+def train_model(model, x_train, y_train, x_test, y_test, district_id):
     # model.fit(x_train, y_train, verbose=False, batch_size=32, nb_epoch=40)
-    # checkpointer = ModelCheckpoint(MODEL_OUT_PATH+'model_district_'+str(district_id+1)+'.h5',
-    #                                verbose=1, save_best_only=True)
-    earlystopping = keras.callbacks.EarlyStopping(monitor='val_loss', patience=10, verbose=0, mode='min')
+    checkpointer = ModelCheckpoint(MODEL_OUT_PATH+'model_district_'+str(district_id+1)+'.h5',
+                                   verbose=1, save_best_only=True)
+    earlystopping = keras.callbacks.EarlyStopping(monitor='val_loss', patience=10, verbose=1, mode='min')
     model.fit(x_train, y_train, verbose=0, validation_data=(x_test, y_test), batch_size=batch_size,
-              nb_epoch=100, callbacks=[earlystopping])
-    return model
+              nb_epoch=100, callbacks=[earlystopping, checkpointer])
 
 
 def return_mape(predict_result, true_result):
@@ -113,7 +112,8 @@ def multi_model(x_train, y_train, x_test, y_test):
         start = time.time()
         for activator in activator_list:
             model = initial_lstm_model(activator=activator)
-            model = train_model(model, temp_x_train, temp_y_train, temp_x_test, temp_y_test)
+            train_model(model, temp_x_train, temp_y_train, temp_x_test, temp_y_test, district_id)
+            model.load_weights(MODEL_OUT_PATH+'model_district_'+str(district_id+1)+'.h5')
             predicted = model.predict(temp_x_test)
             model_list.append(model)
             mape_entry.append(return_mape(predicted, temp_y_test))
