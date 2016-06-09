@@ -47,7 +47,7 @@ def clean_data(x, y):
     y_out = y[non_zero_idx]
     return x_out, y_out
 
-def train_test_split(train_list, label_list, test_size=0.2):
+def train_test_split(train_list, label_list, seed, test_size=0.2):
     """
     This just splits data to training and testing parts
     """
