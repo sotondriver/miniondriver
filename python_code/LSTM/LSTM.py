@@ -76,9 +76,11 @@ def initial_lstm_model(activator):
 
     return model
 
+
 def train_model(model, x_train, y_train, x_test, y_test):
     # model.fit(x_train, y_train, verbose=False, batch_size=32, nb_epoch=40)
-    # checkpointer = ModelCheckpoint(MODEL_OUT_PATH+'model_district_'+str(district_id+1)+'.h5', verbose=1, save_best_only=True)
+    # checkpointer = ModelCheckpoint(MODEL_OUT_PATH+'model_district_'+str(district_id+1)+'.h5',
+    #                                verbose=1, save_best_only=True)
     earlystopping = keras.callbacks.EarlyStopping(monitor='val_loss', patience=10, verbose=0, mode='min')
     model.fit(x_train, y_train, verbose=0, validation_data=(x_test, y_test), batch_size=batch_size,
               nb_epoch=100, callbacks=[earlystopping])
@@ -120,13 +122,14 @@ def multi_model(x_train, y_train, x_test, y_test):
         best_model = model_list[best_idx]
         best_model.save_weights(MODEL_OUT_PATH+'model_district_'+str(district_id+1)+'.h5', overwrite=True)
         print('District: '+str(district_id+1)+' '+str(mape_entry)+' Choose: '+activator_list[best_idx])
-        print(' Time: '+str(end-start))
+        print(' Time: %.2f minutes' % ((end - start) / 60))
         mape_list.append([mape_entry[best_idx]] + [activator_list[best_idx]])
     mape_list.append(['overall mape']+[mape_sum / mape_num])
     return mape_list
 
 
 if __name__ == '__main__':
+    st_time = time.time()
     d = os.path.dirname(MODEL_OUT_PATH)
     if not os.path.exists(d):
         os.makedirs(d)
@@ -139,4 +142,6 @@ if __name__ == '__main__':
     mape = multi_model(train_data, train_label, test_data, test_label)
     out_path = MODEL_OUT_PATH + 'LSTM_MAPE_list.csv'
     write_list_to_csv(mape, out_path)
+    ed_time = time.time()
+    print(' Overall Time: %.2f minutes' % ((st_time - ed_time) / 3600))
     print 'overall mape loss: %f\n' % (mape_sum / mape_num)
