@@ -6,4 +6,7 @@ test_set_1/
 training_data/
 processed_data.zip
 raw_data/
+result/
+final_result/
+*.csv
 
