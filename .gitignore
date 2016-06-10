@@ -7,3 +7,4 @@ training_data/
 processed_data.zip
 result/
 final_result/
+*.csv
