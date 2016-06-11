@@ -36,23 +36,25 @@ def return_mape(predict_result, true_result):
     return _sum/_num
 
 
-def calculate_test_result():
-    csv_path = sub_path + 'LSTM_MAPE_list.csv'
+def calculate_test_result(attempt_path):
+    csv_path = attempt_path + 'LSTM_MAPE_list.csv'
 
     csv_list = open(csv_path).readlines()
     for idx in range(66):
         entry = csv_list[idx]
         entry = entry.strip('\n')
         entry_list = entry.split(',')
+        # initial model and load model
         model = initial_lstm_model(entry_list[1])
-        model_path = sub_path + 'model_district_'+str(idx+1)+'.h5'
+        model_path = attempt_path + 'model_district_'+str(idx+1)+'.h5'
         model.load_weights(model_path)
-        test_data, test_label = load_test_data(sub_path1)
+        # load test data
+        test_data, test_label = load_test_data(attempt_path)
         predicted = model.predict(test_data)
         # get the colomn of test label
         temp_test_label = test_label[..., idx]
         mape = return_mape(predicted, temp_test_label)
-        print('District: '+str(idx+1)+' '+ entry_list[0] + '   %f') % mape
+        print('District: %d %.8s %f') % (idx+1, entry_list[0], mape)
     print('Overall mape: %f') % (mape_sum/mape_num)
 
 
@@ -139,5 +141,6 @@ def generate_test_label():
 
 
 if __name__ == '__main__':
+    calculate_test_result('../../result/attempt1_batch_size_32/')
     # choose_best_model()
-    generate_test_label()
+    # generate_test_label()

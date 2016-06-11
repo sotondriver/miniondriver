@@ -8,7 +8,6 @@ from extend_function import load_cluster_map
 from poi_process import save_poi_data
 from traffic_process import save_traffic_data
 from weather_process import save_weather_data
-from order_process import save_order_data
 
 PARENT_IN_PATH = '../../training_data/'
 PARENT_OUT_PATH = '../../processed_data/'
@@ -39,10 +38,10 @@ def save_individual_csv():
     district_dict = load_cluster_map(CLUSTER_PATH)
 
     # save those csv file for the data cleaness
-    save_traffic_data(district_dict, TRAFFIC_IN_PATH, TRAFFIC_OUT_PATH)
-    save_poi_data(district_dict, POI_IN_PATH, POI_OUT_PATH)
+    # save_traffic_data(district_dict, TRAFFIC_IN_PATH, TRAFFIC_OUT_PATH)
+    # save_poi_data(district_dict, POI_IN_PATH, POI_OUT_PATH)
     save_weather_data(WEATHER_IN_PATH, WEATHER_OUT_PATH)
-    save_order_data(ORDER_IN_PATH, ORDER_OUT_PATH, CLUSTER_PATH)
+    # save_order_data(ORDER_IN_PATH, ORDER_OUT_PATH, CLUSTER_PATH)
 
 
 if __name__ == '__main__':
