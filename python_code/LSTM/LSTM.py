@@ -16,7 +16,7 @@ from extend_function import write_list_to_csv, save_test_csv
 from process_data import *
 
 # parameters for tuning
-attempt = 4.3
+attempt = [2, 1]
 seed = 5
 batch_size_ratio = 0.3
 initial_lr = 0.03/batch_size_ratio
@@ -32,7 +32,8 @@ fit_verbose = 0
 
 # path for using
 PARENT_IN_PATH = '../../processed_data/'
-MODEL_OUT_PATH = '../../result/attempt'+str(attempt)+'_batch_ratio_'+str(batch_size_ratio)+'/'
+MODEL_OUT_PATH = '../../result/attempt'+str(attempt[0])+'/'\
+                 +str(attempt[1])+'_batch_ratio_'+str(batch_size_ratio)+'/'
 train_path = PARENT_IN_PATH + 'didi_train_data.csv'
 label_path = PARENT_IN_PATH + 'didi_train_label.csv'
 
@@ -40,43 +41,6 @@ label_path = PARENT_IN_PATH + 'didi_train_label.csv'
 mape_sum = 0
 mape_num = 0
 
-
-def initial_lstm_model1(activator):
-    data_dim = 67
-    timesteps = 3
-
-    model = Sequential()
-
-    model.add(LSTM(128, input_shape=(timesteps, data_dim),
-                   return_sequences=True, W_regularizer=l2(0.01)))
-    model.add(Activation(activator))
-    model.add(Dropout(0.25))
-    # model.add(TimeDistributedDense(input_dim=timesteps, output_dim=3))
-    #
-
-    model.add(LSTM(64, return_sequences=True, W_regularizer=l2(0.01)))
-    model.add(Activation(activator))
-    model.add(Dropout(0.25))
-    # model.add(TimeDistributedDense(input_dim=timesteps, output_dim=1))
-
-    model.add(Flatten())
-
-    # # #
-    model.add(Dense(32))
-    model.add(Dropout(0.25))
-    model.add(Activation(activator))
-    # # #
-    model.add(Dense(16))
-    model.add(Dropout(0.25))
-    model.add(Activation(activator))
-    #
-    model.add(Dense(1))
-    model.add(Activation(activator))
-
-    optimizer = keras.optimizers.Adam(lr=initial_lr, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
-    model.compile(loss='mape', optimizer=optimizer)
-
-    return model
 
 def initial_lstm_model(activator):
     data_dim = 67
