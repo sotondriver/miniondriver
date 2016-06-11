@@ -12,10 +12,8 @@ from process_data import load_test_data, _construct_xdata
 import numpy as np
 import pandas as pd
 
+
 MODEL_OUT_PATH = '../../result/'
-result_list = listdir_no_hidden(MODEL_OUT_PATH)
-sub_path = MODEL_OUT_PATH + result_list[0] + '/'
-sub_path1 = MODEL_OUT_PATH + result_list[-1] + '/'
 mape_sum = 0
 mape_num = 0
 
@@ -46,7 +44,7 @@ def calculate_test_result(attempt_path):
         entry = entry.strip('\n')
         entry_list = entry.split(',')
         # initial model and load model
-        model = initial_lstm_model1(entry_list[1])
+        model = initial_lstm_model(entry_list[1])
         model_path = attempt_path + 'model_district_'+str(idx+1)+'.h5'
         model.load_weights(model_path)
         # load test data
@@ -62,15 +60,16 @@ def calculate_test_result(attempt_path):
     print('Overall mape: %f') % (mape_sum/mape_num)
 
 
-def choose_best_model():
-    global result_list, sub_path1
+def choose_best_model(s, e, out_path):
+    result_list = listdir_no_hidden(MODEL_OUT_PATH)
     best_mape_list = []
     for model_idx in range(66):
         mape_list = []
         model_list = []
         activator_list = []
-
-        for path_idx in range(12, 15+1, 1):
+        start_idx = s
+        end_idx = e
+        for path_idx in range(start_idx-1, end_idx, 1):
             result_sub_path = MODEL_OUT_PATH + result_list[path_idx]+'/'
             csv_path = result_sub_path + 'LSTM_MAPE_list.csv'
             line = linecache.getline(csv_path, model_idx+1)
@@ -91,18 +90,54 @@ def choose_best_model():
             model_list.append(model)
         best_idx = mape_list.index(min(mape_list))
         # print result
-        print('District: %d %f  '+result_list[12+best_idx]) %(model_idx+1, mape_list[best_idx])
+        print('District: %d %f  '+result_list[start_idx+best_idx]) % (model_idx+1, mape_list[best_idx])
         best_mape_list.append([mape_list[best_idx]] + [activator_list[best_idx]])
         best_model = model_list[best_idx]
-        best_model.save_weights('../../final_result/attempt2/' + 'model_district_' + str(model_idx + 1) + '.h5', overwrite=True)
-    write_list_to_csv(best_mape_list, '../../final_result/attempt2/'+'LSTM_MAPE_list.csv')
+        best_model.save_weights(out_path + 'model_district_' + str(model_idx + 1) + '.h5', overwrite=True)
+    write_list_to_csv(best_mape_list, out_path+'LSTM_MAPE_list.csv')
+
+
+def average_model_result(path):
+    dir_list = listdir_no_hidden(path)
+    result_list = []
+    test_path = '../../processed_data/didi_test_data.csv'
+    test_list_str = open(test_path).readlines()
+    test_data_str = pd.DataFrame(test_list_str)
+    test_data = _construct_xdata(test_data_str)
+    model = initial_lstm_model('linear')
+    for model_idx in range(66):
+        predicted_list = []
+        for path_idx in range(len(dir_list)):
+            result_sub_path = path + dir_list[path_idx] + '/'
+            # csv_path = result_sub_path + 'LSTM_MAPE_list.csv'
+            # line = linecache.getline(csv_path, model_idx + 1)
+            # line = line.strip('\n')
+            # line_list = line.split(',')
+            # activator = line_list[1]
+            # model = initial_lstm_model(activator)
+            model_path = result_sub_path + 'model_district_' + str(model_idx + 1) + '.h5'
+            model.load_weights(model_path)
+            # load the test data
+            predicted = model.predict(test_data)
+            predict = predicted.flatten().tolist()
+            predicted_list.append(predict)
+        predicted_mean = np.mean(predicted_list, axis=0)
+        result = return_predict_label_with_date(predicted_mean, model_idx)
+        # save all the result
+        result_list.append(result)
+        # print result
+        print('Processed District: %d') % (model_idx+1)
+    write_list_to_csv(result_list, path + 'result.csv')
 
 
 def return_predict_label_with_date(predict, district_id):
     test_path = '../../processed_data/didi_test_data.csv'
     test_list_str = open(test_path).readlines()
     new_list = []
-    predict_list = predict.flatten().tolist()
+    if len(predict.shape) > 1:
+        predict_list = predict.flatten().tolist()
+    else:
+        predict_list = predict.tolist()
     for idx in range(len(predict_list)):
         if idx < 9:
             date = '2016-01-22-'
@@ -121,10 +156,9 @@ def return_predict_label_with_date(predict, district_id):
     return new_list
 
 
-def generate_test_label():
+def generate_test_label(attempt_path):
     result_list = []
     test_path = '../../processed_data/didi_test_data.csv'
-    attempt_path = '../../final_result/attempt1/'
     test_list_str = open(test_path).readlines()
     test_data_str = pd.DataFrame(test_list_str)
     test_data = _construct_xdata(test_data_str)
@@ -140,11 +174,12 @@ def generate_test_label():
         predicted = model.predict(test_data)
         result = return_predict_label_with_date(predicted, model_idx)
         result_list += result
-        print('Processed Model : %d') % (model_idx+1)
-    write_list_to_csv(result_list, '../../result1.csv')
+        print('Processed Model: %d') % (model_idx+1)
+    write_list_to_csv(result_list, attempt_path+'result.csv')
 
 
 if __name__ == '__main__':
-    calculate_test_result('../../result/attempt2_batch_ratio_0.3/')
-    # choose_best_model()
-    # generate_test_label()
+    # calculate_test_result('../../result/attempt4.3_batch_ratio_0.3/')
+    # choose_best_model(4, 9, '../../final_result/attempt2/')
+    # generate_test_label('../../final_result/attempt1/')
+    average_model_result('../../result/overall_mape_0.45/')
