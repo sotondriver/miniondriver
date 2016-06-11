@@ -11,23 +11,23 @@ from keras.callbacks import ModelCheckpoint, Callback
 from keras.models import Sequential
 from keras.layers.core import Dense, Activation, Dropout, TimeDistributedDense, Flatten
 from keras.layers.recurrent import LSTM
-from keras.regularizers import l2, activity_l2
+from keras.regularizers import l1l2, l2, activity_l2
 from extend_function import write_list_to_csv, save_test_csv
 from process_data import *
 
-# parameters for tuned
-attempt = 2
+# parameters for tuning
+attempt = 4.3
 seed = 5
 batch_size_ratio = 0.3
-initial_lr = 0.1
-early_stop_patience = 30
+initial_lr = 0.03/batch_size_ratio
+early_stop_patience = 20
 fit_validation_split = 0.2
 fit_epoch = 200
-activator_list = ['linear', 'linear']
+activator_list = ['linear']
 
 # for debug visualize
-checkpointer_verbose = 1
-early_stop_verbose = 1
+checkpointer_verbose = 0
+early_stop_verbose = 0
 fit_verbose = 0
 
 # path for using
@@ -41,12 +41,7 @@ mape_sum = 0
 mape_num = 0
 
 
-def initial_lstm_moel1():
-    data_dim = 67
-    timesteps = 3
-    layers = [3, ]
-
-def initial_lstm_model(activator):
+def initial_lstm_model1(activator):
     data_dim = 67
     timesteps = 3
 
@@ -56,30 +51,52 @@ def initial_lstm_model(activator):
                    return_sequences=True, W_regularizer=l2(0.01)))
     model.add(Activation(activator))
     model.add(Dropout(0.25))
+    # model.add(TimeDistributedDense(input_dim=timesteps, output_dim=3))
+    #
+
+    model.add(LSTM(64, return_sequences=True, W_regularizer=l2(0.01)))
+    model.add(Activation(activator))
+    model.add(Dropout(0.25))
+    # model.add(TimeDistributedDense(input_dim=timesteps, output_dim=1))
+
+    model.add(Flatten())
+
+    # # #
+    model.add(Dense(32))
+    model.add(Dropout(0.25))
+    model.add(Activation(activator))
+    # # #
+    model.add(Dense(16))
+    model.add(Dropout(0.25))
+    model.add(Activation(activator))
+    #
+    model.add(Dense(1))
+    model.add(Activation(activator))
+
+    optimizer = keras.optimizers.Adam(lr=initial_lr, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
+    model.compile(loss='mape', optimizer=optimizer)
+
+    return model
+
+def initial_lstm_model(activator):
+    data_dim = 67
+    timesteps = 3
+
+    model = Sequential()
+
+    model.add(LSTM(128, input_shape=(timesteps, data_dim), dropout_W=0.25,
+                   return_sequences=True, W_regularizer=l1l2(0.1, 0.01)))
+    model.add(Activation(activator))
+    model.add(Dropout(0.25))
     model.add(TimeDistributedDense(input_dim=timesteps, output_dim=3))
     #
 
-    # model.add(LSTM(256, return_sequences=True, W_regularizer=l2(0.05)))
-    # model.add(Activation(activator))
-    # model.add(Dropout(0.25))
-    # model.add(TimeDistributedDense(input_dim=timesteps, output_dim=1))
-    # #
-    #
-    # model.add(LSTM(128, return_sequences=True, W_regularizer=l2(0.05)))
-    # model.add(Activation(activator))
-    # model.add(Dropout(0.25))
-    # model.add(TimeDistributedDense(input_dim=timesteps, output_dim=1))
-
-    model.add(LSTM(64, return_sequences=True, W_regularizer=l2(0.01)))
+    model.add(LSTM(64, return_sequences=True, W_regularizer=l1l2(0.1, 0.01), dropout_W=0.25))
     model.add(Activation(activator))
     model.add(Dropout(0.25))
     model.add(TimeDistributedDense(input_dim=timesteps, output_dim=1))
 
     model.add(Flatten())
-
-    # model.add(Dense(64))
-    # model.add(Dropout(0.25))
-    # model.add(Activation(activator))
     # # #
     model.add(Dense(32))
     model.add(Dropout(0.25))
