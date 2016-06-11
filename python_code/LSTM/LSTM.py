@@ -11,19 +11,39 @@ from keras.callbacks import ModelCheckpoint, Callback
 from keras.models import Sequential
 from keras.layers.core import Dense, Activation, Dropout, TimeDistributedDense, Flatten
 from keras.layers.recurrent import LSTM
-from keras.regularizers import l2, activity_l2
+from keras.regularizers import l1, activity_l2
 from extend_function import write_list_to_csv, save_test_csv
 from process_data import *
 
+# parameters for tuned
+attempt = 2
 seed = 5
 batch_size = 500
+initial_lr = 0.2
+early_stop_patience = 20
+fit_validation_split = 0.2
+fit_epoch = 100
+activator_list = ['linear', 'linear']
+
+# for debug visualize
+checkpointer_verbose = 1
+early_stop_verbose = 1
+
+# path for using
 PARENT_IN_PATH = '../../processed_data/'
-MODEL_OUT_PATH = '../../result/attempt9'+'_batch_size_'+str(batch_size)+'/'
+MODEL_OUT_PATH = '../../result/attempt'+str(attempt)+'_batch_size_'+str(batch_size)+'/'
 train_path = PARENT_IN_PATH + 'didi_train_data.csv'
 label_path = PARENT_IN_PATH + 'didi_train_label.csv'
+
+# global variables
 mape_sum = 0
 mape_num = 0
 
+
+def initial_lstm_moel1():
+    data_dim = 67
+    timesteps = 3
+    layers = [3, ]
 
 def initial_lstm_model(activator):
     data_dim = 67
@@ -31,19 +51,17 @@ def initial_lstm_model(activator):
 
     model = Sequential()
 
-    # model.add(Dense(100, input_dim=3))
-    # model.add(Dropout(0.5))
-    # model.add(Activation("linear"))
-
-    model.add(LSTM(128, input_shape=(timesteps, data_dim), return_sequences=True, W_regularizer=l2(0.05)))
+    model.add(LSTM(128, input_shape=(timesteps, data_dim), inner_activation='tanh',
+                   return_sequences=True, W_regularizer=l1(0.05)))
     model.add(Activation(activator))
     model.add(Dropout(0.25))
-    model.add(TimeDistributedDense(input_dim=timesteps, output_dim=1))
+    model.add(TimeDistributedDense(input_dim=timesteps, output_dim=3))
     #
-    model.add(LSTM(64, return_sequences=True, W_regularizer=l2(0.05)))
+
+    model.add(LSTM(64, return_sequences=False, inner_activation='tanh', W_regularizer=l1(0.05)))
     model.add(Activation(activator))
     model.add(Dropout(0.25))
-    model.add(TimeDistributedDense(input_dim=timesteps, output_dim=1))
+    # model.add(TimeDistributedDense(input_dim=timesteps, output_dim=1))
     #
     # model.add(LSTM(128, return_sequences=True))
     # model.add(Activation(activator))
@@ -54,24 +72,24 @@ def initial_lstm_model(activator):
     # model.add(Activation(activator))
     # model.add(Dropout(0.25))
 
-    model.add(Flatten())
+    # model.add(Flatten())
 
-    model.add(Dense(64, W_regularizer=l2(0.1), activity_regularizer=activity_l2(0.1)))
-    model.add(Dropout(0.25))
+    model.add(Dense(64))
+    model.add(Dropout(0.5))
     model.add(Activation(activator))
     # #
-    model.add(Dense(32, W_regularizer=l2(0.1), activity_regularizer=activity_l2(0.1)))
-    model.add(Dropout(0.25))
+    model.add(Dense(32))
+    model.add(Dropout(0.5))
     model.add(Activation(activator))
     # # #
-    model.add(Dense(16, W_regularizer=l2(0.1), activity_regularizer=activity_l2(0.1)))
-    model.add(Dropout(0.25))
+    model.add(Dense(16))
+    model.add(Dropout(0.5))
     model.add(Activation(activator))
 
     model.add(Dense(1))
     model.add(Activation(activator))
 
-    optimizer = keras.optimizers.Adam(lr=0.2, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
+    optimizer = keras.optimizers.Adam(lr=initial_lr, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
     model.compile(loss='mape', optimizer=optimizer)
 
     return model
@@ -89,11 +107,11 @@ def train_model(model, x_train, y_train, district_id):
 
     decay_lr = ProcessControl()
     checkpointer = ModelCheckpoint(MODEL_OUT_PATH+'model_district_'+str(district_id+1)+'.h5',
-                                   verbose=1, save_best_only=True)
-    earlystopping = keras.callbacks.EarlyStopping(monitor='val_loss', patience=15, verbose=1, mode='min')
-    model.fit(x_train, y_train, verbose=0, validation_split=0.1, batch_size=batch_size, shuffle=True,
-              nb_epoch=100, callbacks=[decay_lr, earlystopping, checkpointer])
-
+                                   verbose=checkpointer_verbose, save_best_only=True)
+    earlystopping = keras.callbacks.EarlyStopping(monitor='val_loss', patience=early_stop_patience,
+                                                  verbose=early_stop_verbose, mode='min')
+    model.fit(x_train, y_train, verbose=0, validation_split=fit_validation_split, batch_size=batch_size, shuffle=True,
+              nb_epoch=fit_epoch, callbacks=[decay_lr, earlystopping, checkpointer])
 
 
 def return_mape(predict_result, true_result):
@@ -113,7 +131,6 @@ def return_mape(predict_result, true_result):
 
 
 def multi_model(x_train, y_train, x_validate, y_validate):
-    activator_list = ['linear', 'tanh', 'sigmoid']
     mape_list = []
     for district_id in range(66):
         mape_entry = []
