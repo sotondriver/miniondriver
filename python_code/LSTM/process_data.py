@@ -43,9 +43,10 @@ def _construct_ydata(data):
 
 def clean_data(x, y):
     non_zero_idx = np.where(y > 0)[0]
+    size = len(non_zero_idx)
     x_out = x[non_zero_idx]
     y_out = y[non_zero_idx]
-    return x_out, y_out
+    return x_out, y_out, size
 
 def train_data_split(train_list, label_list, seed, train_size=0.7, test_size=0.1):
     """
