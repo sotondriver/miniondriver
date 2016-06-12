@@ -9,7 +9,7 @@ from mongo_database import connect_mongodb
 import numpy as np
 from extend_function import write_list_to_csv
 
-def get_train_data_array(district_idx):
+def get_train_data_array_db(district_idx):
     db = connect_mongodb()
     start = time.time()
     total_array = np.zeros(shape=(144 * 21, 4), dtype=np.float32)
