@@ -16,9 +16,10 @@ from extend_function import write_list_to_csv, save_test_csv
 from process_data import *
 
 # parameters for tuning
+
 attempt = [2, 1]
 seed = 5
-batch_size_ratio = 0.3
+batch_size_ratio = 0.1
 initial_lr = 0.03/batch_size_ratio
 early_stop_patience = 20
 fit_validation_split = 0.2
@@ -28,7 +29,7 @@ activator_list = ['linear']
 # for debug visualize
 checkpointer_verbose = 0
 early_stop_verbose = 0
-fit_verbose = 0
+fit_verbose = 1
 
 # path for using
 PARENT_IN_PATH = '../../processed_data/'
@@ -43,33 +44,33 @@ mape_num = 0
 
 
 def initial_lstm_model(activator):
-    data_dim = 67
+    data_dim = 4
     timesteps = 3
 
     model = Sequential()
 
-    model.add(LSTM(128, input_shape=(timesteps, data_dim), dropout_W=0.25,
+    model.add(LSTM(8, input_shape=(timesteps, data_dim), dropout_W=0.25,
                    return_sequences=True, W_regularizer=l1l2(0.1, 0.01)))
     model.add(Activation(activator))
     model.add(Dropout(0.25))
-    model.add(TimeDistributedDense(input_dim=timesteps, output_dim=3))
+    model.add(TimeDistributedDense(output_dim=8, activation=activator, W_regularizer=l1l2(0.1, 0.01)))
     #
 
-    model.add(LSTM(64, return_sequences=True, W_regularizer=l1l2(0.1, 0.01), dropout_W=0.25))
+    model.add(LSTM(1, return_sequences=False, W_regularizer=l1l2(0.1, 0.01), dropout_W=0.25))
     model.add(Activation(activator))
     model.add(Dropout(0.25))
-    model.add(TimeDistributedDense(input_dim=timesteps, output_dim=1))
+    # model.add(TimeDistributedDense(output_dim=1, activation=activator, W_regularizer=l1l2(0.1, 0.01)))
 
-    model.add(Flatten())
+    # model.add(Flatten())
     # # #
-    model.add(Dense(32))
-    model.add(Dropout(0.25))
-    model.add(Activation(activator))
-    # # #
-    model.add(Dense(16))
-    model.add(Dropout(0.25))
-    model.add(Activation(activator))
-    #
+    # model.add(Dense(32))
+    # model.add(Dropout(0.25))
+    # model.add(Activation(activator))
+    # # # #
+    # model.add(Dense(16))
+    # model.add(Dropout(0.25))
+    # model.add(Activation(activator))
+    # #
     model.add(Dense(1))
     model.add(Activation(activator))
 
@@ -102,6 +103,8 @@ def train_model(model, x_train, y_train, district_id, size):
 
 def return_mape(predict_result, true_result):
     global mape_sum, mape_num
+    print(predict_result.shape)
+    print(true_result.shape)
     predict_result1 = predict_result.flatten()
     true_result1 = true_result
     a = np.abs(true_result1 - predict_result1)
@@ -116,49 +119,47 @@ def return_mape(predict_result, true_result):
     return _sum/_num
 
 
-def multi_model(x_train, y_train, x_validate, y_validate):
-    mape_list = []
-    for district_id in range(66):
-        mape_entry = []
-        model_list = []
-        temp_x_train, temp_y_train, size = clean_data(x_train, y_train[..., district_id])
-        temp_x_validate, temp_y_validate, _ = clean_data(x_validate, y_validate[..., district_id])
-        start = time.time()
-        for activator in activator_list:
-            model = initial_lstm_model(activator=activator)
-            train_model(model, temp_x_train, temp_y_train, district_id, size)
-            model.load_weights(MODEL_OUT_PATH+'model_district_'+str(district_id+1)+'.h5')
-            predicted = model.predict(temp_x_validate)
-            model_list.append(model)
-            mape_entry.append(return_mape(predicted, temp_y_validate))
-        end = time.time()
-        best_idx = mape_entry.index(min(mape_entry))
-        best_model = model_list[best_idx]
-        best_model.save_weights(MODEL_OUT_PATH+'model_district_'+str(district_id+1)+'.h5', overwrite=True)
-        print('District: '+str(district_id+1)+' '+str(mape_entry)+' Choose: '+activator_list[best_idx])
-        print(' Time: %.2f minutes' % ((end - start) / 60))
-        mape_list.append([mape_entry[best_idx]] + [activator_list[best_idx]])
-    mape_list.append(['overall mape']+[mape_sum / mape_num])
+def multi_model(x_train, y_train, x_validate, y_validate, district_id):
+    mape_entry = []
+    model_list = []
+    temp_x_train, temp_y_train, size = clean_zeros(x_train, y_train)
+    temp_x_validate, temp_y_validate, _ = clean_zeros(x_validate, y_validate)
+    start = time.time()
+    for activator in activator_list:
+        model = initial_lstm_model(activator=activator)
+        train_model(model, temp_x_train, temp_y_train, district_id, size)
+        model.load_weights(MODEL_OUT_PATH+'model_district_'+str(district_id+1)+'.h5')
+        predicted = model.predict(temp_x_validate)
+        model_list.append(model)
+        mape_entry.append(return_mape(predicted, temp_y_validate))
+    end = time.time()
+    best_idx = mape_entry.index(min(mape_entry))
+    best_model = model_list[best_idx]
+    best_model.save_weights(MODEL_OUT_PATH+'model_district_'+str(district_id+1)+'.h5', overwrite=True)
+    print('District: '+str(district_id+1)+' '+str(mape_entry)+' Choose: '+activator_list[best_idx])
+    print(' Time: %.2f minutes' % ((end - start) / 60))
+    mape_list.append([mape_entry[best_idx]] + [activator_list[best_idx]])
     return mape_list
 
 
 if __name__ == '__main__':
+    mape_list = []
     st_time = time.time()
     d = os.path.dirname(MODEL_OUT_PATH)
     if not os.path.exists(d):
         os.makedirs(d)
-    train_data_str = open(train_path)
-    label_data_str = open(label_path)
-    train_list_str = train_data_str.readlines()
-    label_list_str = label_data_str.readlines()
-    (train_data, train_label), (validate_data, validate_label), (test_data, test_label) \
-        = train_data_split(train_list_str, label_list_str, seed=seed)
-    # save the test_data into the models directory
-    save_test_csv(MODEL_OUT_PATH, test_data, test_label)
-    mape = multi_model(train_data, train_label, validate_data, validate_label)
-    out_path = MODEL_OUT_PATH + 'LSTM_MAPE_list.csv'
-    # save the validation MAPE for every model and overall MAPE
-    write_list_to_csv(mape, out_path)
-    ed_time = time.time()
-    print(' Overall Time: %.2f hours' % ((ed_time - st_time) / 3600))
-    print 'overall mape loss: %f\n' % (mape_sum / mape_num)
+    for district_idx in range(1, 66+1, 1):
+        data_array = get_train_data_array(district_idx)
+        train_array, label_array = construct_data_for_lstm(data_array)
+        (train_data, train_label), (validate_data, validate_label), (test_data, test_label) \
+            = train_data_split(train_array, label_array)
+        # save the test_data into the models directory
+        save_test_csv(MODEL_OUT_PATH, test_data, test_label)
+        mape = multi_model(train_data, train_label, validate_data, validate_label, district_idx)
+        out_path = MODEL_OUT_PATH + 'LSTM_MAPE_list.csv'
+        # save the validation MAPE for every model and overall MAPE
+        write_list_to_csv(mape, out_path)
+        ed_time = time.time()
+        print(' Overall Time: %.2f hours' % ((ed_time - st_time) / 3600))
+        print('overall mape loss: %f\n' % (mape_sum / mape_num))
+    mape_list.append(['overall mape']+[mape_sum / mape_num])

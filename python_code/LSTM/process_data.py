@@ -6,49 +6,32 @@ Created on 16/6/6 15:35 2016
 """
 import numpy as np
 import pandas as pd
+from python_code.preprocess.create_training_data import get_train_data_array
 
 
-def _construct_xdata(data):
-    """
-    data should be pd.DataFrame()
-    """
-    data1 = data.values.tolist()
-    temp = []
-
-    for entry in data1:
+def construct_data_for_lstm(data):
+    data1 = data.tolist()
+    _data = []
+    _label = []
+    for idx in range(data.shape[0]/4):
         matrix = []
-        entry = entry[0]
-        entry = entry.split(',')
-        entry =  map(int, entry)
-        time = entry[0]
-        matrix.append([time-3] + entry[1:67])
-        matrix.append([time-2] + entry[67:133])
-        matrix.append([time-1] + entry[133:199])
-        temp.append(matrix)
+        temp_idx = idx*4
+        matrix.append(data1[temp_idx])
+        matrix.append(data1[temp_idx+1])
+        matrix.append(data1[temp_idx+2])
+        _label.append(data1[temp_idx+3][2])
+        _data.append(matrix)
 
-    data_out = np.array(temp)
-    return data_out
+    return _data, _label
 
-
-def _construct_ydata(data):
-    data1 = data.values.tolist()
-    temp = []
-    for entry in data1:
-        entry = entry[0]
-        entry = entry.split(',')
-        entry = map(int, entry)
-        temp.append(entry)
-    data_out = np.array(temp)
-    return data_out
-
-def clean_data(x, y):
+def clean_zeros(x, y):
     non_zero_idx = np.where(y > 0)[0]
     size = len(non_zero_idx)
     x_out = x[non_zero_idx]
     y_out = y[non_zero_idx]
     return x_out, y_out, size
 
-def train_data_split(train_list, label_list, seed, train_size=0.7, test_size=0.1):
+def train_data_split(train_list, label_list, train_size=0.7, test_size=0.1):
     """
     This just splits data to training and testing parts
     """
@@ -68,14 +51,14 @@ def train_data_split(train_list, label_list, seed, train_size=0.7, test_size=0.1
     train_data = pd.DataFrame(data_)
     label_data = pd.DataFrame(label_)
 
-    X_train = _construct_xdata(train_data.iloc[0:idx1])
-    y_train = _construct_ydata(label_data.iloc[0:idx1])
-    x_validate = _construct_xdata(train_data.iloc[idx1:idx2])
-    y_validate = _construct_ydata(label_data.iloc[idx1:idx2])
-    X_test = train_data.iloc[idx2:]
-    y_test = label_data.iloc[idx2:]
+    x_train = train_data.iloc[0:idx1].as_matrix()
+    y_train = label_data.iloc[0:idx1].values
+    x_validate = train_data.iloc[idx1:idx2].values
+    y_validate = label_data.iloc[idx1:idx2].values
+    x_test = train_data.iloc[idx2:].values
+    y_test = label_data.iloc[idx2:].values
 
-    return (X_train, y_train), (x_validate, y_validate), (X_test, y_test)
+    return (x_train, y_train), (x_validate, y_validate), (x_test, y_test)
 
 
 def load_test_data(path):
@@ -85,3 +68,7 @@ def load_test_data(path):
     test_label = _construct_ydata(temp_test_ydata)
     return test_data, test_label
 
+if __name__ == '__main__':
+    train_data = get_train_data_array(65)
+    data, label = construct_data_for_lstm(train_data)
+    train_data_split(data, label)
