@@ -3,7 +3,8 @@ season_1/
 processed_data/
 .idea/
 test_set_1/
-training_data/
+test_set_2/
+training_data_1/
 processed_data.zip
 raw_data/
 result/
