@@ -161,4 +161,4 @@ if __name__ == '__main__':
     write_list_to_csv(mape, out_path)
     ed_time = time.time()
     print(' Overall Time: %.2f hours' % ((ed_time - st_time) / 3600))
-    print 'overall mape loss: %f\n' % (mape_sum / mape_num)
+    print('overall mape loss: %f\n' % (mape_sum / mape_num))
