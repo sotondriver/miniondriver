@@ -84,6 +84,8 @@ for district_idx in range(1, 66, 1):
             if (count%10000) == 0:
                 print(count)
             total_list.append(entry_list)
+    order_cursor.rewind()
+    traffic_cursor.rewind()
 header = ['district_idx', 'date_idx', 'time_slot_idx', 'order_count', 'no_ed_district_id_count', 'poi_list',
                           'traffic_list', 'weather_list', 'gap_count']
 write_list_to_csv(total_list, path_out='../../processed_data/training_data.csv')
