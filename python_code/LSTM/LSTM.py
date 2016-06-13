@@ -22,12 +22,12 @@ from python_code.LSTM.process_data import clean_zeros_or_not, get_train_data_arr
 # parameters for tuning
 attempt = [2, 1]
 seed = 5
-batch_size_ratio = 0.3
+batch_size_ratio = 1
 initial_lr = 0.03/batch_size_ratio
 early_stop_patience = 20
 fit_validation_split = 0.2
 fit_epoch = 200
-activator_list = ['linear']
+activator_list = ['linear','tanh']
 clean_zeros_flag = True
 
 # for debug visualize
@@ -60,11 +60,14 @@ def initial_lstm_model(activator):
     model.add(TimeDistributed(Dense(output_dim=8, activation=activator, W_regularizer=l1l2(0.1, 0.01))))
     #
 
-    model.add(LSTM(4, return_sequences=False, W_regularizer=l1l2(0.1, 0.01), dropout_W=0.25))
+    model.add(LSTM(4, return_sequences=True, W_regularizer=l1l2(0.1, 0.01), dropout_W=0.25))
     model.add(Activation(activator))
     model.add(Dropout(0.25))
-    # model.add(TimeDistributedDense(output_dim=1, activation=activator, W_regularizer=l1l2(0.1, 0.01)))
+    model.add(TimeDistributed(Dense(output_dim=4, activation=activator, W_regularizer=l1l2(0.1, 0.01))))
 
+    model.add(LSTM(1, return_sequences=False, W_regularizer=l1l2(0.1, 0.01), dropout_W=0.25))
+    model.add(Activation(activator))
+    model.add(Dropout(0.25))
     # model.add(Flatten())
     # # #
     # model.add(Dense(32))

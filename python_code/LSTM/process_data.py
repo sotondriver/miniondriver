@@ -8,11 +8,11 @@ import numpy as np
 import pandas as pd
 from python_code.preprocess.create_training_data import get_train_data_array_db
 
+
 def get_train_data_array_csv(district_idx):
     path = '../../processed_data/train/district_'+str(district_idx)+'_training_data.csv'
     train_data = pd.read_csv(path).values
     return train_data
-
 
 
 def construct_data_for_lstm(data):
@@ -77,7 +77,7 @@ def load_test_data(path):
     return test_data, test_label
 
 if __name__ == '__main__':
-    train_data = get_train_data_array_db(65)
+    # train_data = get_train_data_array_db(65)
     train_data = get_train_data_array_csv(65)
     data, label = construct_data_for_lstm(train_data)
     train_data_split(data, label)
