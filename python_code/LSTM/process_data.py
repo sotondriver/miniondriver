@@ -4,15 +4,46 @@ Created on 16/6/6 15:35 2016
 
 @author: harry sun
 """
+import linecache
+
 import numpy as np
 import pandas as pd
+from sklearn.preprocessing import normalize
 from python_code.preprocess.create_training_data import get_order_data_array_db
 
 
 def get_train_data_array_csv(district_idx):
-    path = '../../processed_data/train/district_'+str(district_idx)+'_training_data.csv'
-    train_data = pd.read_csv(path).values
-    return train_data
+    order_path = '../../processed_data/train/D'+str(district_idx)+'_order_data.csv'
+    traffic_path = '../../processed_data/train/D'+str(district_idx)+'_traffic_data.csv'
+    order_data = pd.read_csv(order_path, header=None).values
+    traffic_data = pd.read_csv(traffic_path, header=None).values[..., 1:5]
+    train_data = np.concatenate((order_data, traffic_data), axis=1)
+
+    normalised_data = normalize(train_data, norm='l2', axis=1, copy=True)
+    normalised_data[..., 2] = train_data[..., 2]
+    return normalised_data
+
+
+def get_train_data_array_csv_by_active_matrix(district_idx):
+    order_path = '../../processed_data/train/D' + str(district_idx) + '_order_data.csv'
+    traffic_path = '../../processed_data/train/D' + str(district_idx) + '_traffic_data.csv'
+    train_data = pd.read_csv(order_path, header=None).values
+
+    matrix_path = '../../processed_data/coef_activate_matrix.csv'
+    line  = linecache.getline(matrix_path, district_idx)
+    line = line.strip('\n')
+    line_list = line.split(',')
+    for (idx, item) in enumerate(line_list):
+        if (item == '1') & (idx+1 != district_idx):
+            active_district_id = idx + 1
+            active_path = '../../processed_data/train/D' + str(active_district_id) + '_order_data.csv'
+            active_data = pd.read_csv(active_path, header=None).values[..., 1:4]
+            train_data = np.concatenate((train_data, active_data), axis=1)
+
+    traffic_data = pd.read_csv(traffic_path, header=None).values[..., 1:5]
+    train_data = np.concatenate((train_data, traffic_data), axis=1)
+    dim = train_data.shape[1]
+    return train_data, dim
 
 
 def construct_data_for_lstm(data):
@@ -25,12 +56,15 @@ def construct_data_for_lstm(data):
         matrix.append(data1[temp_idx])
         matrix.append(data1[temp_idx+1])
         matrix.append(data1[temp_idx+2])
+        matrix.append(data1[temp_idx+2])
+        matrix.append(data1[temp_idx+1])
+        matrix.append(data1[temp_idx])
         _label.append(data1[temp_idx+3])
         _data.append(matrix)
 
     return _data, _label
 
-def clean_zeros_or_not(x, y, flag):
+def clean_zeros(x, y, flag):
     if flag:
         non_zero_idx = np.where(y > 0)[0]
         size = len(non_zero_idx)
@@ -78,6 +112,7 @@ def load_test_data(path):
 
 if __name__ == '__main__':
     # train_data = get_train_data_array_db(65)
-    train_data = get_train_data_array_csv(65)
+    get_train_data_array_csv_by_active_matrix(1)
+    train_data = get_train_data_array_csv(1)
     data, label = construct_data_for_lstm(train_data)
     train_data_split(data, label)

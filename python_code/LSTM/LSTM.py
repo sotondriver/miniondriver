@@ -15,25 +15,25 @@ from keras.layers.core import Dense, Activation, Dropout, TimeDistributedDense, 
 from keras.layers.recurrent import LSTM
 from keras.regularizers import l1l2, l2, activity_l2
 from extend_function import write_list_to_csv, save_test_csv
-from python_code.LSTM.process_data import clean_zeros_or_not, get_train_data_array_csv, construct_data_for_lstm, \
-    train_data_split
+from python_code.LSTM.process_data import clean_zeros, get_train_data_array_csv, construct_data_for_lstm, \
+    train_data_split, get_train_data_array_csv_by_active_matrix
 
 
 # parameters for tuning
 attempt = [2, 1]
 seed = 5
-batch_size_ratio = 1
-initial_lr = 0.03/batch_size_ratio
+batch_size_ratio = 0.5
+initial_lr = 0.1
 early_stop_patience = 20
 fit_validation_split = 0.2
 fit_epoch = 200
-activator_list = ['linear','tanh']
+activator_list = ['linear','linear']
 clean_zeros_flag = True
 
 # for debug visualize
 checkpointer_verbose = 0
 early_stop_verbose = 0
-fit_verbose = 0
+fit_verbose = 1
 
 # path for using
 PARENT_IN_PATH = '../../processed_data/'
@@ -47,36 +47,35 @@ mape_sum = 0
 mape_num = 0
 
 
-def initial_lstm_model(activator):
-    data_dim = 4
-    timesteps = 3
+def initial_lstm_model(activator, data_dim):
+    timesteps = 6
 
     model = Sequential()
 
-    model.add(LSTM(8, input_shape=(timesteps, data_dim), dropout_W=0.25,
+    model.add(LSTM(128, input_shape=(timesteps, data_dim), dropout_W=0.25,
                    return_sequences=True, W_regularizer=l1l2(0.1, 0.01)))
     model.add(Activation(activator))
     model.add(Dropout(0.25))
-    model.add(TimeDistributed(Dense(output_dim=8, activation=activator, W_regularizer=l1l2(0.1, 0.01))))
+    # model.add(TimeDistributed(Dense(output_dim=64, activation=activator, W_regularizer=l1l2(0.1, 0.01))))
     #
 
-    model.add(LSTM(4, return_sequences=True, W_regularizer=l1l2(0.1, 0.01), dropout_W=0.25))
+    model.add(LSTM(64, return_sequences=True, W_regularizer=l1l2(0.1, 0.01), dropout_W=0.25))
     model.add(Activation(activator))
     model.add(Dropout(0.25))
-    model.add(TimeDistributed(Dense(output_dim=4, activation=activator, W_regularizer=l1l2(0.1, 0.01))))
+    # model.add(TimeDistributed(Dense(output_dim=32, activation=activator, W_regularizer=l1l2(0.1, 0.01))))
 
-    model.add(LSTM(1, return_sequences=False, W_regularizer=l1l2(0.1, 0.01), dropout_W=0.25))
+    model.add(LSTM(32, return_sequences=False, W_regularizer=l1l2(0.1, 0.01), dropout_W=0.25))
     model.add(Activation(activator))
     model.add(Dropout(0.25))
     # model.add(Flatten())
     # # #
-    # model.add(Dense(32))
-    # model.add(Dropout(0.25))
-    # model.add(Activation(activator))
+    model.add(Dense(32))
+    model.add(Dropout(0.25))
+    model.add(Activation(activator))
     # # # #
-    # model.add(Dense(8))
-    # model.add(Dropout(0.25))
-    # model.add(Activation(activator))
+    model.add(Dense(8))
+    model.add(Dropout(0.25))
+    model.add(Activation(activator))
     # #
     model.add(Dense(1))
     model.add(Activation(activator))
@@ -93,7 +92,7 @@ def train_model(model, x_train, y_train, district_id, size):
             self.losses = []
 
         def on_epoch_begin(self, epoch, logs={}):
-            new_lr = np.float32(model.optimizer.lr.get_value() * 0.97)
+            new_lr = np.float32(model.optimizer.lr.get_value() * 0.99)
             model.optimizer.lr.set_value(new_lr)
             # print new_lr
 
@@ -127,17 +126,17 @@ def return_mape(predict_result, true_result):
     return _sum/_num
 
 
-def multi_model(x_train, y_train, x_validate, y_validate, district_id):
+def multi_model(x_train, y_train, x_validate, y_validate, district_id, dim):
     mape_entry = []
     model_list = []
     # clean zero gaps entry
-    temp_x_train, temp_y_train, size = clean_zeros_or_not(x_train, y_train[..., 2], clean_zeros_flag)
-    temp_x_validate, temp_y_validate, _ = clean_zeros_or_not(x_validate, y_validate[..., 2], clean_zeros_flag)
+    temp_x_train, temp_y_train, size = clean_zeros(x_train, y_train[..., 2], clean_zeros_flag)
+    temp_x_validate, temp_y_validate, _ = clean_zeros(x_validate, y_validate[..., 2], clean_zeros_flag)
     #
 
     start = time.time()
     for activator in activator_list:
-        model = initial_lstm_model(activator=activator)
+        model = initial_lstm_model(activator=activator, data_dim=dim)
         train_model(model, temp_x_train, temp_y_train, district_id, size)
         model.load_weights(MODEL_OUT_PATH+'model_district_'+str(district_id)+'.h5')
         predicted = model.predict(temp_x_validate)
@@ -160,7 +159,7 @@ if __name__ == '__main__':
         os.makedirs(d)
     for district_idx in range(1, 66+1, 1):
         # get data from csv or mongodb
-        data_array = get_train_data_array_csv(district_idx)
+        data_array, train_dim = get_train_data_array_csv_by_active_matrix(district_idx)
         # construct data
         train_array, label_array = construct_data_for_lstm(data_array)
         # split data by 7:2:1
@@ -168,7 +167,7 @@ if __name__ == '__main__':
             = train_data_split(train_array, label_array)
         # save the test_data into the models directory
         save_test_csv(MODEL_OUT_PATH, test_data, test_label)
-        mape_entry = multi_model(train_data, train_label, validate_data, validate_label, district_idx)
+        mape_entry = multi_model(train_data, train_label, validate_data, validate_label, district_idx, train_dim)
         mape_list.append(mape_entry)
     # save the validation MAPE for every model and overall MAPE
     out_path = MODEL_OUT_PATH + 'LSTM_MAPE_list.csv'
