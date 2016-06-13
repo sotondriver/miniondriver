@@ -139,6 +139,7 @@ def get_weather_data_array_db():
     return weather_array
 
 
+
 if __name__ == '__main__':
     st = time.time()
     #

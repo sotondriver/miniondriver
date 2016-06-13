@@ -8,18 +8,21 @@ import linecache
 
 import numpy as np
 import pandas as pd
-from sklearn.preprocessing import normalize
+from sklearn.preprocessing import scale
 from python_code.preprocess.create_training_data import get_order_data_array_db
 
 
 def get_train_data_array_csv(district_idx):
     order_path = '../../processed_data/train/D'+str(district_idx)+'_order_data.csv'
     traffic_path = '../../processed_data/train/D'+str(district_idx)+'_traffic_data.csv'
+    weather_path = '../../processed_data/train/weather_data'
+
     order_data = pd.read_csv(order_path, header=None).values
     traffic_data = pd.read_csv(traffic_path, header=None).values[..., 1:5]
+    weather_data = pd.read_csv(weather_path, header=None).values[..., 1:4]
     train_data = np.concatenate((order_data, traffic_data), axis=1)
 
-    normalised_data = normalize(train_data, norm='l2', axis=1, copy=True)
+    normalised_data = scale(train_data, axis=1, copy=True)
     normalised_data[..., 2] = train_data[..., 2]
     return normalised_data
 
@@ -27,6 +30,8 @@ def get_train_data_array_csv(district_idx):
 def get_train_data_array_csv_by_active_matrix(district_idx):
     order_path = '../../processed_data/train/D' + str(district_idx) + '_order_data.csv'
     traffic_path = '../../processed_data/train/D' + str(district_idx) + '_traffic_data.csv'
+    weather_path = '../../processed_data/train/weather_data.csv'
+    poi_path = '../../processed_data/train/poi_data.csv'
     train_data = pd.read_csv(order_path, header=None).values
 
     matrix_path = '../../processed_data/coef_activate_matrix.csv'
@@ -37,13 +42,20 @@ def get_train_data_array_csv_by_active_matrix(district_idx):
         if (item == '1') & (idx+1 != district_idx):
             active_district_id = idx + 1
             active_path = '../../processed_data/train/D' + str(active_district_id) + '_order_data.csv'
-            active_data = pd.read_csv(active_path, header=None).values[..., 1:4]
+            active_data = pd.read_csv(active_path, header=None).values[..., 2:3]
             train_data = np.concatenate((train_data, active_data), axis=1)
 
     traffic_data = pd.read_csv(traffic_path, header=None).values[..., 1:5]
-    train_data = np.concatenate((train_data, traffic_data), axis=1)
+    weather_data = pd.read_csv(weather_path, header=None).values[..., 1:4]
+    temp_poi_data = pd.read_csv(poi_path, header=None).values[district_idx-1:district_idx, 1:26]
+    poi_data = np.tile(temp_poi_data, (3024, 1))
+    train_data = np.concatenate((train_data, traffic_data, weather_data, poi_data), axis=1)
+
+    normalised_data = scale(train_data, axis=1, copy=True)
+    normalised_data[..., 2] = train_data[..., 2]
+    normalised_data[..., 0] = train_data[..., 0]
     dim = train_data.shape[1]
-    return train_data, dim
+    return normalised_data, dim
 
 
 def construct_data_for_lstm(data):
@@ -111,8 +123,10 @@ def load_test_data(path):
     return test_data, test_label
 
 if __name__ == '__main__':
-    # train_data = get_train_data_array_db(65)
-    get_train_data_array_csv_by_active_matrix(1)
-    train_data = get_train_data_array_csv(1)
-    data, label = construct_data_for_lstm(train_data)
-    train_data_split(data, label)
+    for district_id in range(1, 66+1, 1):
+        # train_data = get_train_data_array_db(65)
+        _, dim = get_train_data_array_csv_by_active_matrix(district_id)
+        print(dim)
+        # train_data = get_train_data_array_csv(1)
+        # data, label = construct_data_for_lstm(train_data)
+        # train_data_split(data, label)

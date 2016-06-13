@@ -15,7 +15,7 @@ from keras.layers.core import Dense, Activation, Dropout, TimeDistributedDense, 
 from keras.layers.recurrent import LSTM
 from keras.regularizers import l1l2, l2, activity_l2
 from extend_function import write_list_to_csv, save_test_csv
-from python_code.LSTM.process_data import clean_zeros, get_train_data_array_csv, construct_data_for_lstm, \
+from process_data import clean_zeros, get_train_data_array_csv, construct_data_for_lstm, \
     train_data_split, get_train_data_array_csv_by_active_matrix
 
 
