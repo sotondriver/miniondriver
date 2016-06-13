@@ -6,7 +6,7 @@ Created on 16/6/6 15:35 2016
 """
 import numpy as np
 import pandas as pd
-from python_code.preprocess.create_training_data import get_train_data_array_db
+from python_code.preprocess.create_training_data import get_order_data_array_db
 
 
 def get_train_data_array_csv(district_idx):
