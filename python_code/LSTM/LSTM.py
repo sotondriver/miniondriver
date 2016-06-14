@@ -21,14 +21,15 @@ from process_data import clean_zeros, get_train_data_array_csv, construct_data_f
 
 
 # parameters for tuning
-attempt = [3, 1]
-batch_size_ratio = 0.3
-initial_lr = 0.02
+attempt = [1, 'lr_0.002_loss']
+batch_size_ratio = 0.02
+initial_lr = 0.002
 early_stop_patience = 20
 fit_validation_split = 0.2
 fit_epoch = 200
 activator_list = ['linear']
 clean_zeros_flag = True
+fit_monitor = 'loss'
 
 # for debug visualize
 checkpointer_verbose = 0
@@ -113,7 +114,7 @@ def train_model(model, x_train, y_train, district_id, size):
     decay_lr = ProcessControl()
     checkpointer = ModelCheckpoint(MODEL_OUT_PATH+'model_district_'+str(district_id)+'.h5',
                                    verbose=checkpointer_verbose, save_best_only=True)
-    earlystopping = keras.callbacks.EarlyStopping(monitor='val_loss', patience=early_stop_patience,
+    earlystopping = keras.callbacks.EarlyStopping(monitor=fit_monitor, patience=early_stop_patience,
                                                   verbose=early_stop_verbose, mode='min')
     model.fit(x_train, y_train, verbose=fit_verbose, validation_split=fit_validation_split,
               batch_size=batch_size, shuffle=True,
