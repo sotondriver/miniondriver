@@ -13,21 +13,21 @@ from keras.layers import TimeDistributed
 from keras.models import Sequential
 from keras.layers.core import Dense, Activation, Dropout, TimeDistributedDense, Flatten
 from keras.layers.recurrent import LSTM
-from keras.regularizers import l1l2, l2, activity_l2
+from keras.optimizers import SGD
+from keras.regularizers import l1l2, l1, activity_l2
 from extend_function import write_list_to_csv, save_test_csv
 from process_data import clean_zeros, get_train_data_array_csv, construct_data_for_lstm, \
     train_data_split, get_train_data_array_csv_by_active_matrix
 
 
 # parameters for tuning
-attempt = [2, 1]
-seed = 5
-batch_size_ratio = 0.5
-initial_lr = 0.1
+attempt = [3, 1]
+batch_size_ratio = 0.3
+initial_lr = 0.02
 early_stop_patience = 20
 fit_validation_split = 0.2
 fit_epoch = 200
-activator_list = ['linear','linear']
+activator_list = ['linear']
 clean_zeros_flag = True
 
 # for debug visualize
@@ -48,30 +48,30 @@ mape_num = 0
 
 
 def initial_lstm_model(activator, data_dim):
-    timesteps = 6
+    timesteps = 3
 
     model = Sequential()
 
-    model.add(LSTM(128, input_shape=(timesteps, data_dim), dropout_W=0.25,
-                   return_sequences=True, W_regularizer=l1l2(0.1, 0.01)))
+    model.add(LSTM(64, input_shape=(timesteps, data_dim), dropout_W=0.25,
+                   return_sequences=True, W_regularizer=l1(0.1)))
     model.add(Activation(activator))
     model.add(Dropout(0.25))
     # model.add(TimeDistributed(Dense(output_dim=64, activation=activator, W_regularizer=l1l2(0.1, 0.01))))
     #
 
-    model.add(LSTM(64, return_sequences=True, W_regularizer=l1l2(0.1, 0.01), dropout_W=0.25))
+    model.add(LSTM(32, return_sequences=True, W_regularizer=l1(0.01), dropout_W=0.25))
     model.add(Activation(activator))
     model.add(Dropout(0.25))
-    # model.add(TimeDistributed(Dense(output_dim=32, activation=activator, W_regularizer=l1l2(0.1, 0.01))))
+    # model.add(TimeDistributed(Dense(output_dim=16, activation=activator, W_regularizer=l1(0.01))))
 
-    model.add(LSTM(32, return_sequences=False, W_regularizer=l1l2(0.1, 0.01), dropout_W=0.25))
+    model.add(LSTM(16, return_sequences=False, W_regularizer=l1(0.01), dropout_W=0.25))
     model.add(Activation(activator))
     model.add(Dropout(0.25))
     # model.add(Flatten())
     # # #
-    model.add(Dense(32))
-    model.add(Dropout(0.25))
-    model.add(Activation(activator))
+    # model.add(Dense(32))
+    # model.add(Dropout(0.25))
+    # model.add(Activation(activator))
     # # # #
     model.add(Dense(8))
     model.add(Dropout(0.25))
@@ -80,7 +80,7 @@ def initial_lstm_model(activator, data_dim):
     model.add(Dense(1))
     model.add(Activation(activator))
 
-    optimizer = keras.optimizers.Adam(lr=initial_lr, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
+    optimizer = keras.optimizers.Adamax(lr=initial_lr, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
     model.compile(loss='mape', optimizer=optimizer)
 
     return model
@@ -92,7 +92,7 @@ def train_model(model, x_train, y_train, district_id, size):
             self.losses = []
 
         def on_epoch_begin(self, epoch, logs={}):
-            new_lr = np.float32(model.optimizer.lr.get_value() * 0.99)
+            new_lr = np.float32(model.optimizer.lr.get_value() * 0.97)
             model.optimizer.lr.set_value(new_lr)
             # print new_lr
 

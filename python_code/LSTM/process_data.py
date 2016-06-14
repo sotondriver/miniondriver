@@ -49,11 +49,12 @@ def get_train_data_array_csv_by_active_matrix(district_idx):
     weather_data = pd.read_csv(weather_path, header=None).values[..., 1:4]
     temp_poi_data = pd.read_csv(poi_path, header=None).values[district_idx-1:district_idx, 1:26]
     poi_data = np.tile(temp_poi_data, (3024, 1))
-    train_data = np.concatenate((train_data, traffic_data, weather_data, poi_data), axis=1)
+    train_data = np.concatenate((train_data, traffic_data, weather_data), axis=1)
 
     normalised_data = scale(train_data, axis=1, copy=True)
-    normalised_data[..., 2] = train_data[..., 2]
-    normalised_data[..., 0] = train_data[..., 0]
+
+    normalised_data[..., 0:4] = train_data[..., 0:4]
+    # normalised_data[..., 0] = train_data[..., 0]
     dim = train_data.shape[1]
     return normalised_data, dim
 
@@ -68,9 +69,9 @@ def construct_data_for_lstm(data):
         matrix.append(data1[temp_idx])
         matrix.append(data1[temp_idx+1])
         matrix.append(data1[temp_idx+2])
-        matrix.append(data1[temp_idx+2])
-        matrix.append(data1[temp_idx+1])
-        matrix.append(data1[temp_idx])
+        # matrix.append(data1[temp_idx+2])
+        # matrix.append(data1[temp_idx+1])
+        # matrix.append(data1[temp_idx])
         _label.append(data1[temp_idx+3])
         _data.append(matrix)
 
@@ -126,7 +127,9 @@ if __name__ == '__main__':
     for district_id in range(1, 66+1, 1):
         # train_data = get_train_data_array_db(65)
         _, dim = get_train_data_array_csv_by_active_matrix(district_id)
-        print(dim)
+        # weight = np.ones(shape=(dim)) * 0.01
+        # weight[2] = weight[2]*10
+        print('%d  %d' %(district_id, dim))
         # train_data = get_train_data_array_csv(1)
         # data, label = construct_data_for_lstm(train_data)
         # train_data_split(data, label)
