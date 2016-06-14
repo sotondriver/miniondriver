@@ -6,7 +6,7 @@ Created on 16/6/9 17:28 2016
 """
 import linecache
 
-from LSTM import initial_lstm_model, initial_lstm_model1
+from LSTM import initial_lstm_model, initial_lstm_model
 from extend_function import listdir_no_hidden, write_list_to_csv
 from process_data import load_test_data, _construct_xdata
 import numpy as np
