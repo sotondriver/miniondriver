@@ -15,9 +15,9 @@ def write_list_to_csv(list1, path_out, header=False):
 def save_test_csv(path, test_data, test_label):
     test_data_out_path = path + 'test_data.csv'
     test_label_out_path = path + 'test_label.csv'
-    test_data.to_csv(test_data_out_path, index=False, header=False)
-    test_label.to_csv(test_label_out_path, index=False, header=False)
 
+    write_list_to_csv(test_data.tolist(), test_data_out_path)
+    write_list_to_csv(test_label.tolist(), test_label_out_path)
 
 def listdir_no_hidden(path):
     list1 = []

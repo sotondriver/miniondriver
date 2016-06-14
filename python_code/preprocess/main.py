@@ -9,8 +9,9 @@ from poi_process import save_poi_data
 from traffic_process import save_traffic_data
 from weather_process import save_weather_data
 
-PARENT_IN_PATH = '../../training_data/'
-PARENT_OUT_PATH = '../../processed_data/'
+# PARENT_IN_PATH = '../../training_data/'
+PARENT_IN_PATH = '../../test_set_2/'
+PARENT_OUT_PATH = '../../processed_data/test/'
 
 # the path of all the necessary file location
 CLUSTER_PATH = PARENT_IN_PATH + 'cluster_map'
@@ -35,12 +36,12 @@ TRAFFIC_NAMES = ['district_id', 'tj_class1', 'tj_class2', 'tj_class3', 'tj_class
 
 def save_individual_csv():
     # the hash dictionary for the district map ID
-    district_dict = load_cluster_map(CLUSTER_PATH)
+    district_dict = load_cluster_map()
 
     # save those csv file for the data cleaness
-    # save_traffic_data(district_dict, TRAFFIC_IN_PATH, TRAFFIC_OUT_PATH)
-    # save_poi_data(district_dict, POI_IN_PATH, POI_OUT_PATH)
-    save_weather_data(WEATHER_IN_PATH, WEATHER_OUT_PATH)
+    save_traffic_data(district_dict, TRAFFIC_IN_PATH, TRAFFIC_OUT_PATH)
+    save_poi_data(district_dict, POI_IN_PATH, POI_OUT_PATH)
+    # save_weather_data(WEATHER_IN_PATH, WEATHER_OUT_PATH)
     # save_order_data(ORDER_IN_PATH, ORDER_OUT_PATH, CLUSTER_PATH)
 
 

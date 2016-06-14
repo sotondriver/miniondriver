@@ -21,7 +21,8 @@ def write_list_to_csv(list1, path_out, header=False):
     temp.to_csv(path_out, index=False, header=header)
 
 
-def load_cluster_map(path):
+def load_cluster_map():
+    path = '../../training_data/cluster_map'
     temp_path = listdir_no_hidden(path)
     temp_path = path + '/' + temp_path[0]
     table = pd.read_table(temp_path, names=['district hash', 'district_id'])
