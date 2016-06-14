@@ -51,34 +51,47 @@ def initial_lstm_model(activator, data_dim):
     timesteps = 3
 
     model = Sequential()
+    if data_dim > 30:
+        model.add(LSTM(64, input_shape=(timesteps, data_dim), dropout_W=0.25,
+                       return_sequences=True, W_regularizer=l1(0.1)))
+        model.add(Activation(activator))
+        model.add(Dropout(0.25))
+        # model.add(TimeDistributed(Dense(output_dim=64, activation=activator, W_regularizer=l1l2(0.1, 0.01))))
+        #
 
-    model.add(LSTM(64, input_shape=(timesteps, data_dim), dropout_W=0.25,
-                   return_sequences=True, W_regularizer=l1(0.1)))
-    model.add(Activation(activator))
-    model.add(Dropout(0.25))
-    # model.add(TimeDistributed(Dense(output_dim=64, activation=activator, W_regularizer=l1l2(0.1, 0.01))))
-    #
+        model.add(LSTM(32, return_sequences=True, W_regularizer=l1(0.01), dropout_W=0.25))
+        model.add(Activation(activator))
+        model.add(Dropout(0.25))
+        # model.add(TimeDistributed(Dense(output_dim=16, activation=activator, W_regularizer=l1(0.01))))
 
-    model.add(LSTM(32, return_sequences=True, W_regularizer=l1(0.01), dropout_W=0.25))
-    model.add(Activation(activator))
-    model.add(Dropout(0.25))
-    # model.add(TimeDistributed(Dense(output_dim=16, activation=activator, W_regularizer=l1(0.01))))
+        model.add(LSTM(16, return_sequences=False, W_regularizer=l1(0.01), dropout_W=0.25))
+        model.add(Activation(activator))
+        model.add(Dropout(0.25))
 
-    model.add(LSTM(16, return_sequences=False, W_regularizer=l1(0.01), dropout_W=0.25))
-    model.add(Activation(activator))
-    model.add(Dropout(0.25))
-    # model.add(Flatten())
-    # # #
-    # model.add(Dense(32))
-    # model.add(Dropout(0.25))
-    # model.add(Activation(activator))
-    # # # #
-    model.add(Dense(8))
-    model.add(Dropout(0.25))
-    model.add(Activation(activator))
-    # #
-    model.add(Dense(1))
-    model.add(Activation(activator))
+        model.add(Dense(8))
+        model.add(Dropout(0.25))
+        model.add(Activation(activator))
+        # #
+        model.add(Dense(1))
+        model.add(Activation(activator))
+    else:
+        model.add(LSTM(32, input_shape=(timesteps, data_dim), dropout_W=0.25,
+                       return_sequences=True, W_regularizer=l1(0.1)))
+        model.add(Activation(activator))
+        model.add(Dropout(0.25))
+        # model.add(TimeDistributed(Dense(output_dim=64, activation=activator, W_regularizer=l1l2(0.1, 0.01))))
+        #
+
+        model.add(LSTM(16, return_sequences=False, W_regularizer=l1(0.01), dropout_W=0.25))
+        model.add(Activation(activator))
+        model.add(Dropout(0.25))
+
+        model.add(Dense(8))
+        model.add(Dropout(0.25))
+        model.add(Activation(activator))
+        # #
+        model.add(Dense(1))
+        model.add(Activation(activator))
 
     optimizer = keras.optimizers.Adamax(lr=initial_lr, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
     model.compile(loss='mape', optimizer=optimizer)
@@ -148,7 +161,7 @@ def multi_model(x_train, y_train, x_validate, y_validate, district_id, dim):
     best_model.save_weights(MODEL_OUT_PATH+'model_district_'+str(district_id)+'.h5', overwrite=True)
     print('District: '+str(district_id)+' '+str(mape_entry)+' Choose: '+activator_list[best_idx])
     print(' Time: %.2f minutes' % ((end - start) / 60))
-    return [mape_entry[best_idx]] + [activator_list[best_idx]]
+    return [mape_entry[best_idx]] + [activator_list[best_idx]] + [dim]
 
 
 if __name__ == '__main__':
