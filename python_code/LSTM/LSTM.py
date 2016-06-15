@@ -9,7 +9,7 @@ import time
 import keras
 import numpy as np
 from keras.callbacks import ModelCheckpoint, Callback
-from keras.layers import TimeDistributed
+from keras.layers import TimeDistributed, GRU
 from keras.models import Sequential
 from keras.layers.core import Dense, Activation, Dropout, TimeDistributedDense, Flatten
 from keras.layers.recurrent import LSTM
@@ -54,29 +54,29 @@ def initial_lstm_model(activator, data_dim):
 
     model = Sequential()
     if data_dim > 30:
-        model.add(LSTM(64, input_shape=(timesteps, data_dim), dropout_W=0.25, U_regularizer=l1(0.1),
-                       return_sequences=True, W_regularizer=l1(0.1)))
+        model.add(LSTM(64, input_shape=(timesteps, data_dim), dropout_W=0.25, dropout_U=0.25,
+                       return_sequences=True, W_regularizer=l1(0.1), U_regularizer=l1(0.1)))
         model.add(Activation(activator))
         model.add(Dropout(0.25))
-        model.add(TimeDistributed(Dense(output_dim=64, W_regularizer=l1(0.1),b_regularizer=l1(0.1))))
+        # model.add(TimeDistributed(Dense(output_dim=64, W_regularizer=l1(0.1),b_regularizer=l1(0.1))))
         #
 
-        model.add(LSTM(32, return_sequences=True, W_regularizer=l1(0.01),
-                       dropout_W=0.25))
+        model.add(LSTM(32, return_sequences=True, dropout_W=0.25, dropout_U=0.25,
+                       W_regularizer=l1(0.01), U_regularizer=l1(0.01)))
         model.add(Activation(activator))
         model.add(Dropout(0.25))
         # model.add(TimeDistributed(Dense(output_dim=16, activation=activator, W_regularizer=l1(0.01))))
 
     else:
-        model.add(LSTM(32, input_shape=(timesteps, data_dim), dropout_W=0.25,
-                       return_sequences=True, W_regularizer=l1(0.1)))
+        model.add(LSTM(32, input_shape=(timesteps, data_dim), dropout_W=0.25, dropout_U=0.25,
+                       return_sequences=True, W_regularizer=l1(0.1), U_regularizer=l1(0.1)))
         model.add(Activation(activator))
         model.add(Dropout(0.25))
         # model.add(TimeDistributed(Dense(output_dim=64, activation=activator, W_regularizer=l1l2(0.1, 0.01))))
         #
 
-    model.add(LSTM(16, return_sequences=False, W_regularizer=l1(0.01),
-                   dropout_W=0.25))
+    model.add(LSTM(16, return_sequences=False, dropout_W=0.25, dropout_U=0.25,
+                   W_regularizer=l1(0.01), U_regularizer=l1(0.01)))
     model.add(Activation(activator))
     model.add(Dropout(0.25))
 

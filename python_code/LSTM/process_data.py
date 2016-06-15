@@ -36,7 +36,7 @@ def get_train_data_array_csv_by_active_matrix(district_idx):
     poi_path = '../../processed_data/train/poi_data.csv'
     train_data = pd.read_csv(order_path, header=None).values
 
-    matrix_path = '../../processed_data/coef_activate_matrix.csv'
+    matrix_path = '../../processed_data/coef_active_matrix.csv'
     line  = linecache.getline(matrix_path, district_idx)
     line = line.strip('\n')
     line_list = line.split(',')
