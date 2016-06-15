@@ -11,6 +11,8 @@ import pandas as pd
 from sklearn.preprocessing import scale
 # from python_code.preprocess.create_training_data import get_order_data_array_db
 
+predict_time_slot_window = [43, 44, 45,46, 55, 56, 57,58, 67, 68, 69,70, 79, 80, 81,82, 91, 92, 93,94, 103, 104,
+                            105,106, 115, 116, 117,118, 127, 128, 129,130, 139, 140, 141,142]
 
 def get_train_data_array_csv(district_idx):
     order_path = '../../processed_data/train/D'+str(district_idx)+'_order_data.csv'
@@ -55,8 +57,20 @@ def get_train_data_array_csv_by_active_matrix(district_idx):
 
     normalised_data[..., 0:4] = train_data[..., 0:4]
     # normalised_data[..., 0] = train_data[..., 0]
+    # normalised_data[..., 2] = train_data[..., 2]
     dim = train_data.shape[1]
+
+    test_idx = get_data_by_test_window()
+    normalised_data = normalised_data[test_idx, ...]
     return normalised_data, dim
+
+
+def get_data_by_test_window():
+    idx_list = []
+    for i in range(1, 21 ,1):
+        for time_slot_idx in predict_time_slot_window:
+            idx_list.append(i*144+time_slot_idx-1)
+    return idx_list
 
 
 def construct_data_for_lstm(data):
@@ -69,9 +83,9 @@ def construct_data_for_lstm(data):
         matrix.append(data1[temp_idx])
         matrix.append(data1[temp_idx+1])
         matrix.append(data1[temp_idx+2])
-        # matrix.append(data1[temp_idx+2])
-        # matrix.append(data1[temp_idx+1])
-        # matrix.append(data1[temp_idx])
+        matrix.append(data1[temp_idx+2])
+        matrix.append(data1[temp_idx+1])
+        matrix.append(data1[temp_idx])
         _label.append(data1[temp_idx+3])
         _data.append(matrix)
 

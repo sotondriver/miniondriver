@@ -9,16 +9,20 @@ from mongo_database import connect_mongodb
 import numpy as np
 from extend_function import write_list_to_csv
 
+date_window = [23, 25, 27, 29, 31]
+predict_time_slot_window = [43, 44, 45, 55, 56, 57, 67, 68, 69, 79, 80, 81, 91, 92, 93, 103, 104,
+                            105, 115, 116, 117, 127, 128, 129, 139, 140, 141]
+
 def  get_traffic_data_array_db(district_idx):
     db = connect_mongodb()
     start = time.time()
-    traffic_array = np.zeros(shape=(144 * 5, 5), dtype=np.float32)
+    traffic_array = np.zeros(shape=(27 * 5, 5), dtype=np.float32)
     traffic_cursor = db.get_collection('test_traffic_data').find({'district_ID': district_idx}, no_cursor_timeout=True)
 
     for traffic_entry in traffic_cursor:
         date_idx = traffic_entry['date']
         time_slot_idx = traffic_entry['time_slot']
-        total_idx = (date_idx - 23) * 144 + time_slot_idx - 1
+        total_idx = get_idx(date_idx, time_slot_idx)
 
         # del traffic_entry['_id']
         # del traffic_entry['district_ID']
@@ -33,11 +37,7 @@ def  get_traffic_data_array_db(district_idx):
     zero_idx = np.where(time_slot_column == 0)[0]
     if zero_idx.size > 0:
         for idx in zero_idx:
-            traffic_array[idx, 0] = (idx + 1) % 144
-            if (idx + 1) % 144 == 0:
-                traffic_array[idx, 0] = 144
-            if idx % 144 == 0:
-                traffic_array[idx, 0] = 1
+            traffic_array[idx, 0] = predict_time_slot_window[(idx + 1) % 27]
 
     traffic_cursor.rewind()
     end = time.time()
@@ -47,12 +47,12 @@ def  get_traffic_data_array_db(district_idx):
 
 def get_weather_data_array_db(name):
     db = connect_mongodb()
-    weather_array = np.zeros(shape=(144 * 5, 4), dtype=np.float32)
+    weather_array = np.zeros(shape=(27*5, 4), dtype=np.float32)
     weather_cursor = db.get_collection(name).find({})
     for weather_entry in weather_cursor:
         date_idx = weather_entry['date']
         time_slot_idx = weather_entry['time_slot']
-        total_idx = (date_idx - 23) * 144 + time_slot_idx - 1
+        total_idx = get_idx(date_idx, time_slot_idx)
         if np.sum(weather_array[total_idx]) == 0:
             weather_array[total_idx, 0] = time_slot_idx
             # todo use one line to assign the value
@@ -81,31 +81,26 @@ def get_weather_data_array_db(name):
             array = temp_array / float(count)
             weather_array[idx, 1:4] = array
             # fill the 0 time slot
-            weather_array[idx, 0] = (idx + 1) % 144
-            if (idx + 1) % 144 == 0:
-                weather_array[idx, 0] = 144
-            if idx % 144 == 0:
-                weather_array[idx, 0] = 1
+            weather_array[idx, 0] = predict_time_slot_window[(idx + 1) % 27]
     return weather_array
 
 
 def get_idx(date, time_slot):
-    date_window = [23,25,27,29,31]
-    predict_time_slot_window1 = [43,44,45,55,56,57,67,68,69,79,80,81,91,92,93,103,104,
-                                105,115,116,117,127,128,129,139,140,141]
-    predict_time_slot_window2 = [55, 56, 57, 67, 68, 69, 79, 80, 81, 91, 92, 93, 103, 104,
-                                 105, 115, 116, 117, 127, 128, 129, 139, 140, 141]
+    idx = None
+
     if date in date_window:
-        idx1 = date_window.index(date)
-        if time_slot in predict_time_slot_window1:
-            temp_idx = predict_time_slot_window1.index(time_slot)
-            idx = (date-23)
-    #todo
+        date_idx = date_window.index(date)
+        if time_slot in predict_time_slot_window:
+            temp_idx = predict_time_slot_window.index(time_slot)
+            idx = (date_idx * 27) + temp_idx
+    return idx
 
 if __name__ == '__main__':
     st = time.time()
     #
-    weather_array = get_weather_data_array_db('test_weather_data')
-    weather_list = weather_array.tolist()
-    weather_path = '../../processed_data/test/weather_data.csv'
-    write_list_to_csv(weather_list, weather_path)
+    # weather_array = get_weather_data_array_db('test_weather_data')
+    # weather_list = weather_array.tolist()
+    # weather_path = '../../processed_data/test/weather_data.csv'
+    # write_list_to_csv(weather_list, weather_path)
+
+    p = get_traffic_data_array_db(2)

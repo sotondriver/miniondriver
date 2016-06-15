@@ -21,8 +21,9 @@ from process_data import clean_zeros, get_train_data_array_csv, construct_data_f
 
 
 # parameters for tuning
-attempt = [1, 'lr_0.002_loss']
-batch_size_ratio = 0.02
+attempt = [1, 'lr_0.02_loss']
+batch_size_ratio = 0.002
+# batch_size = 1
 initial_lr = 0.002
 early_stop_patience = 20
 fit_validation_split = 0.2
@@ -49,7 +50,7 @@ mape_num = 0
 
 
 def initial_lstm_model(activator, data_dim):
-    timesteps = 3
+    timesteps = 6
 
     model = Sequential()
     if data_dim > 30:
@@ -57,7 +58,7 @@ def initial_lstm_model(activator, data_dim):
                        return_sequences=True, W_regularizer=l1(0.1)))
         model.add(Activation(activator))
         model.add(Dropout(0.25))
-        # model.add(TimeDistributed(Dense(output_dim=64, activation=activator, W_regularizer=l1l2(0.1, 0.01))))
+        # model.add(TimeDistributed(Dense(output_dim=64, activation=activator, W_regularizer=l1(0.1))))
         #
 
         model.add(LSTM(32, return_sequences=True, W_regularizer=l1(0.01), dropout_W=0.25))
