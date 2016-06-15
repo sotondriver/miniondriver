@@ -22,7 +22,7 @@ from process_data import clean_zeros, get_train_data_array_csv, construct_data_f
 
 # parameters for tuning
 attempt = [1, 'lr_0.02_loss']
-batch_size_ratio = 0.002
+batch_size_ratio = 0.02
 # batch_size = 1
 initial_lr = 0.002
 early_stop_patience = 20
@@ -54,28 +54,19 @@ def initial_lstm_model(activator, data_dim):
 
     model = Sequential()
     if data_dim > 30:
-        model.add(LSTM(64, input_shape=(timesteps, data_dim), dropout_W=0.25,
+        model.add(LSTM(64, input_shape=(timesteps, data_dim), dropout_W=0.25, U_regularizer=l1(0.1),
                        return_sequences=True, W_regularizer=l1(0.1)))
         model.add(Activation(activator))
         model.add(Dropout(0.25))
-        # model.add(TimeDistributed(Dense(output_dim=64, activation=activator, W_regularizer=l1(0.1))))
+        model.add(TimeDistributed(Dense(output_dim=64, W_regularizer=l1(0.1),b_regularizer=l1(0.1))))
         #
 
-        model.add(LSTM(32, return_sequences=True, W_regularizer=l1(0.01), dropout_W=0.25))
+        model.add(LSTM(32, return_sequences=True, W_regularizer=l1(0.01),
+                       dropout_W=0.25))
         model.add(Activation(activator))
         model.add(Dropout(0.25))
         # model.add(TimeDistributed(Dense(output_dim=16, activation=activator, W_regularizer=l1(0.01))))
 
-        model.add(LSTM(16, return_sequences=False, W_regularizer=l1(0.01), dropout_W=0.25))
-        model.add(Activation(activator))
-        model.add(Dropout(0.25))
-
-        model.add(Dense(8))
-        model.add(Dropout(0.25))
-        model.add(Activation(activator))
-        # #
-        model.add(Dense(1))
-        model.add(Activation(activator))
     else:
         model.add(LSTM(32, input_shape=(timesteps, data_dim), dropout_W=0.25,
                        return_sequences=True, W_regularizer=l1(0.1)))
@@ -84,16 +75,17 @@ def initial_lstm_model(activator, data_dim):
         # model.add(TimeDistributed(Dense(output_dim=64, activation=activator, W_regularizer=l1l2(0.1, 0.01))))
         #
 
-        model.add(LSTM(16, return_sequences=False, W_regularizer=l1(0.01), dropout_W=0.25))
-        model.add(Activation(activator))
-        model.add(Dropout(0.25))
+    model.add(LSTM(16, return_sequences=False, W_regularizer=l1(0.01),
+                   dropout_W=0.25))
+    model.add(Activation(activator))
+    model.add(Dropout(0.25))
 
-        model.add(Dense(8))
-        model.add(Dropout(0.25))
-        model.add(Activation(activator))
-        # #
-        model.add(Dense(1))
-        model.add(Activation(activator))
+    model.add(Dense(8))
+    model.add(Dropout(0.25))
+    model.add(Activation(activator))
+    # #
+    model.add(Dense(1))
+    model.add(Activation(activator))
 
     optimizer = keras.optimizers.Adamax(lr=initial_lr, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
     model.compile(loss='mape', optimizer=optimizer)
@@ -111,7 +103,7 @@ def train_model(model, x_train, y_train, district_id, size):
             model.optimizer.lr.set_value(new_lr)
             # print new_lr
 
-    batch_size = int(round(size * batch_size_ratio))
+    batch_size = int(np.math.ceil(size * batch_size_ratio))
     decay_lr = ProcessControl()
     checkpointer = ModelCheckpoint(MODEL_OUT_PATH+'model_district_'+str(district_id)+'.h5',
                                    verbose=checkpointer_verbose, save_best_only=True)
