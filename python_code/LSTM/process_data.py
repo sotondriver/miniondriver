@@ -15,7 +15,9 @@ from sklearn.preprocessing import scale
 
 predict_time_slot_window = [43, 44, 45, 46, 55, 56, 57, 58, 67, 68, 69, 70, 79, 80, 81, 82, 91, 92, 93, 94, 103, 104,
                             105, 106, 115, 116, 117, 118, 127, 128, 129, 130, 139, 140, 141, 142]
-
+idx = [1, 2, 3, 4, 5, 6, 9, 10, 11, 12, 13, 15, 16, 17, 18, 19, 21, 22, 25, 26, 27, 29, 30, 31, 32, 33, 34, 35, 36,
+       38, 39, 40, 41, 42, 43, 44, 45, 47, 49, 50, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66]
+idx1 = [7, 8, 14, 20, 23, 24, 28, 37, 46, 48, 51]
 
 #
 # def get_train_data_array_csv(district_idx):
@@ -35,10 +37,7 @@ predict_time_slot_window = [43, 44, 45, 46, 55, 56, 57, 58, 67, 68, 69, 70, 79, 
 
 def get_train_data_array_csv():
     total_data = np.zeros((1, 36))
-    idx = [1, 2, 3, 4, 5, 6, 9, 10, 11, 12, 13, 15, 16, 17, 18, 19, 21, 22, 25, 26, 27, 29, 30, 31, 32, 33, 34, 35, 36,
-           38, 39, 40, 41, 42, 43, 44, 45, 47, 49, 50, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66]
-    idx1 = [7, 8, 14, 20, 23, 24, 28, 37, 46, 48, 51]
-    for district_idx in idx1:
+    for district_idx in idx:
         order_path = '../../processed_data/train/D' + str(district_idx) + '_order_data.csv'
         traffic_path = '../../processed_data/train/D' + str(district_idx) + '_traffic_data.csv'
         weather_path = '../../processed_data/train/weather_data.csv'
@@ -60,6 +59,30 @@ def get_train_data_array_csv():
     dim = total_data.shape[1]
     return normalised_data, dim
 
+
+def get_test_data_array_csv():
+    total_data = np.zeros((1, 36))
+    for district_idx in idx:
+        order_path = '../../processed_data/test/D' + str(district_idx) + '_order_data.csv'
+        traffic_path = '../../processed_data/test/D' + str(district_idx) + '_traffic_data.csv'
+        weather_path = '../../processed_data/test/weather_data.csv'
+        poi_path = '../../processed_data/test/poi_data.csv'
+
+        order_data = pd.read_csv(order_path, header=None).values
+        traffic_data = pd.read_csv(traffic_path, header=None).values[..., 1:5]
+        weather_data = pd.read_csv(weather_path, header=None).values[..., 1:4]
+        temp_poi_data = pd.read_csv(poi_path, header=None).values[district_idx - 1:district_idx, 1:26]
+        poi_data = np.tile(temp_poi_data, (135, 1))
+        test_data = np.concatenate((order_data, traffic_data, weather_data, poi_data), axis=1)
+
+        total_data = np.concatenate((total_data, test_data), axis=0)
+    total_data = total_data[1:, ...]
+
+    normalised_data = scale(total_data, axis=1, copy=True)
+    normalised_data[..., 0:4] = total_data[..., 0:4]
+
+    dim = total_data.shape[1]
+    return normalised_data, dim
 
 def get_train_data_array_csv_by_active_matrix(district_idx):
     order_path = '../../processed_data/train/D' + str(district_idx) + '_order_data.csv'
@@ -97,11 +120,12 @@ def get_train_data_array_csv_by_active_matrix(district_idx):
     return normalised_data, dim
 
 
-def get_data_by_test_window():
+def get_data_by_test_window(total_len):
     idx_list = []
-    for i in range(1, 21, 1):
-        for time_slot_idx in predict_time_slot_window:
-            idx_list.append(i * 144 + time_slot_idx - 1)
+    for j in range(total_len):
+        for i in range(1, 21, 1):
+            for time_slot_idx in predict_time_slot_window:
+                idx_list.append(i * 144 + time_slot_idx - 1)
     return idx_list
 
 
@@ -115,14 +139,27 @@ def construct_data_for_lstm(data):
         matrix.append(data1[temp_idx])
         matrix.append(data1[temp_idx + 1])
         matrix.append(data1[temp_idx + 2])
-        matrix.append(data1[temp_idx + 2])
-        matrix.append(data1[temp_idx + 1])
-        matrix.append(data1[temp_idx])
+        # matrix.append(data1[temp_idx + 2])
+        # matrix.append(data1[temp_idx + 1])
+        # matrix.append(data1[temp_idx])
         _label.append(data1[temp_idx + 3])
         _data.append(matrix)
 
     return _data, _label
 
+
+def construct_test_data_for_lstm(data):
+    data1 = data.tolist()
+    _data = []
+    for idx in range(0, data.shape[0], 3):
+        matrix = []
+        temp_idx = idx
+        matrix.append(data1[temp_idx])
+        matrix.append(data1[temp_idx + 1])
+        matrix.append(data1[temp_idx + 2])
+        _data.append(matrix)
+
+    return _data
 
 def clean_zeros(x, y, flag):
     if flag:
@@ -183,7 +220,8 @@ def load_test_data(path):
 
 
 if __name__ == '__main__':
-    get_train_data_array_csv()
+
+    get_test_data_array_csv()
     load_test_data('../../result/attempt6/lr_0.002_loss_2_batch_ratio_0.002/')
 
     for district_id in range(1, 66 + 1, 1):

@@ -8,7 +8,8 @@ import linecache
 
 from LSTM import initial_lstm_model, initial_lstm_model
 from extend_function import listdir_no_hidden, write_list_to_csv
-from process_data import load_test_data
+from process_data import load_test_data, get_test_data_array_csv, construct_data_for_lstm, get_train_data_array_csv, \
+    construct_test_data_for_lstm, idx
 import numpy as np
 import pandas as pd
 
@@ -58,37 +59,39 @@ def calculate_test_result(attempt_path):
     print(('Overall mape: %f') % (mape_sum/mape_num))
 
 
-def average_model_result(path):
-    dir_list = listdir_no_hidden(path)
-    result_list = []
-    test_path = '../../processed_data/didi_test_data.csv'
-    test_list_str = open(test_path).readlines()
-    test_data_str = pd.DataFrame(test_list_str)
-    test_data = _construct_xdata(test_data_str)
-    model = initial_lstm_model('linear')
-    for model_idx in range(66):
-        predicted_list = []
-        for path_idx in range(len(dir_list)):
-            result_sub_path = path + dir_list[path_idx] + '/'
-            # csv_path = result_sub_path + 'LSTM_MAPE_list.csv'
-            # line = linecache.getline(csv_path, model_idx + 1)
-            # line = line.strip('\n')
-            # line_list = line.split(',')
-            # activator = line_list[1]
-            # model = initial_lstm_model(activator)
-            model_path = result_sub_path + 'model_district_' + str(model_idx + 1) + '.h5'
-            model.load_weights(model_path)
-            # load the test data
-            predicted = model.predict(test_data)
-            predict = predicted.flatten().tolist()
-            predicted_list.append(predict)
-        predicted_mean = np.mean(predicted_list, axis=0)
-        result = return_predict_label_with_date(predicted_mean, model_idx)
-        # save all the result
-        result_list += result
-        # print result
-        print(('Processed District: %d') % (model_idx+1))
-    write_list_to_csv(result_list, path + 'result.csv')
+def generate_test_result(attempt_path):
+    # load the test data
+    test_array, data_dim = get_test_data_array_csv()
+    test_data = construct_test_data_for_lstm(test_array)
+    csv_path = attempt_path + 'LSTM_MAPE_list.csv'
+    entry = open(csv_path).readlines()[0]
+    entry = entry.strip('\n')
+    entry_list = entry.split(',')
+    # initial model and load model
+    model = initial_lstm_model(entry_list[1], int(entry_list[2]))
+    model_path = attempt_path + 'model_district_1.h5'
+    model.load_weights(model_path)
+    predicted = model.predict(test_data)
+    predict = predicted.flatten().tolist()
+
+    result_list = return_predict_label_with_idx(predict)
+    write_list_to_csv(result_list, attempt_path + 'result.csv')
+
+
+def return_predict_label_with_idx(predict):
+    date_list = [23,25,27,29,31]
+    predict_time_slot = [46,58,70,82,94,106,118,130,142]
+    new_list = []
+    count = 0
+    for district_idx in idx:
+        for date_idx in date_list:
+            for time_slot_idx in predict_time_slot:
+                if ((date_idx == 25) | (date_idx == 29)) & (time_slot_idx == 46):
+                    pass
+                else:
+                    new_list.append([district_idx]+['2016-01-'+str(date_idx)+'-'+str(time_slot_idx)]+[predict[count]])
+                count +=1
+    return new_list
 
 
 def return_predict_label_with_date(predict, district_id):
@@ -126,5 +129,5 @@ if __name__ == '__main__':
     dir_list1 = listdir_no_hidden(parent_path)
     sub_path = parent_path + dir_list1[0]+'/'
     #
-    calculate_test_result(parent_path)
-    # average_model_result(parent_path)
+    # calculate_test_result(parent_path)
+    generate_test_result(parent_path)

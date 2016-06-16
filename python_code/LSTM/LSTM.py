@@ -21,11 +21,11 @@ from process_data import clean_zeros, get_train_data_array_csv, construct_data_f
 
 
 # parameters for tuning
-attempt = [2, 'final_try_2']
-batch_size_ratio = 0.02
+attempt = [2, 'final_try_on_easy']
+batch_size_ratio = 0.002
 # batch_size = 1
 initial_lr = 0.002
-early_stop_patience = 20
+early_stop_patience = 10
 fit_validation_split = 0.2
 fit_epoch = 200
 activator_list = ['linear']
@@ -50,18 +50,18 @@ mape_num = 0
 
 
 def initial_lstm_model(activator, data_dim):
-    timesteps = 6
+    timesteps = 3
 
     model = Sequential()
     if data_dim > 30:
-        model.add(LSTM(64, input_shape=(timesteps, data_dim), dropout_W=0.25, dropout_U=0.25,
-                       return_sequences=True, W_regularizer=l1(0.1), U_regularizer=l1(0.1)))
+        model.add(LSTM(32, input_shape=(timesteps, data_dim), dropout_W=0.25, dropout_U=0.25,
+                       return_sequences=True, W_regularizer=l1(0.01), U_regularizer=l1(0.01)))
         model.add(Activation(activator))
         model.add(Dropout(0.25))
         # model.add(TimeDistributed(Dense(output_dim=64, W_regularizer=l1(0.1),b_regularizer=l1(0.1))))
         #
 
-        model.add(LSTM(32, return_sequences=True, dropout_W=0.25, dropout_U=0.25,
+        model.add(LSTM(16, return_sequences=True, dropout_W=0.25, dropout_U=0.25,
                        W_regularizer=l1(0.01), U_regularizer=l1(0.01)))
         model.add(Activation(activator))
         model.add(Dropout(0.25))
