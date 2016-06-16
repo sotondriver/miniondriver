@@ -95,6 +95,42 @@ def get_order_data_array_db(district_idx, name):
     return order_array
 
 
+def get_order_data_array_db_lei(district_idx, name):
+    db = connect_mongodb()
+    start = time.time()
+    order_array = np.zeros(shape=(144 * 21, 6), dtype=np.float32)
+    order_cursor = db.get_collection(name).find({'st_district_id': district_idx}, no_cursor_timeout=True)
+
+    # process order data, 4 features used
+    for order_entry in order_cursor:
+        date_idx = order_entry['date']
+        time_slot_idx = order_entry['time_slot']
+        total_idx = (date_idx - 1) * 144 + time_slot_idx - 1
+
+        order_array[total_idx, 0] = time_slot_idx
+        order_array[total_idx, 1] += 1
+        if len(str(order_entry['driver_id'])) < 5:
+            order_array[total_idx, 2] += 1
+        if order_entry['ed_district_id'] == 0:
+            order_array[total_idx, 3] += 1
+
+    # todo remove the find 0, use idx to calculate
+    # fill the 0 orders time_slot
+    time_slot_column = order_array[:, 0]
+    zero_idx = np.where(time_slot_column == 0)[0]
+    if zero_idx.size > 0:
+        for idx in zero_idx:
+            order_array[idx, 0] = (idx + 1) % 144
+            if (idx + 1) % 144 == 0:
+                order_array[idx, 0] = 144
+            if idx % 144 == 0:
+                order_array[idx, 0] = 1
+
+    order_cursor.rewind()
+    end = time.time()
+    print('Processed Order in District: %d in %.2f seconds' % (district_idx, (end - start)))
+    return order_array
+
 def get_weather_data_array_db(name):
     db = connect_mongodb()
     weather_array = np.zeros(shape=(144 * 21, 4), dtype=np.float32)

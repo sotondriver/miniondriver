@@ -5,6 +5,7 @@ Created on 16/6/6 15:35 2016
 @author: harry sun
 """
 import linecache
+import string
 
 import numpy as np
 import pandas as pd
@@ -13,21 +14,50 @@ from sklearn.preprocessing import scale
 
 predict_time_slot_window = [43, 44, 45,46, 55, 56, 57,58, 67, 68, 69,70, 79, 80, 81,82, 91, 92, 93,94, 103, 104,
                             105,106, 115, 116, 117,118, 127, 128, 129,130, 139, 140, 141,142]
+#
+# def get_train_data_array_csv(district_idx):
+#     order_path = '../../processed_data/train/D'+str(district_idx)+'_order_data.csv'
+#     traffic_path = '../../processed_data/train/D'+str(district_idx)+'_traffic_data.csv'
+#     weather_path = '../../processed_data/train/weather_data'
+#
+#     order_data = pd.read_csv(order_path, header=None).values
+#     traffic_data = pd.read_csv(traffic_path, header=None).values[..., 1:5]
+#     weather_data = pd.read_csv(weather_path, header=None).values[..., 1:4]
+#     train_data = np.concatenate((order_data, traffic_data), axis=1)
+#
+#     normalised_data = scale(train_data, axis=1, copy=True)
+#     normalised_data[..., 2] = train_data[..., 2]
+#     return normalised_data
 
-def get_train_data_array_csv(district_idx):
-    order_path = '../../processed_data/train/D'+str(district_idx)+'_order_data.csv'
-    traffic_path = '../../processed_data/train/D'+str(district_idx)+'_traffic_data.csv'
-    weather_path = '../../processed_data/train/weather_data'
 
-    order_data = pd.read_csv(order_path, header=None).values
-    traffic_data = pd.read_csv(traffic_path, header=None).values[..., 1:5]
-    weather_data = pd.read_csv(weather_path, header=None).values[..., 1:4]
-    train_data = np.concatenate((order_data, traffic_data), axis=1)
+def get_train_data_array_csv():
+    total_data = np.zeros((1,36))
+    idx = [1, 2, 3, 4, 5, 6, 9, 10, 11, 12, 13, 15, 16, 17, 18, 19, 21, 22, 25, 26, 27, 29, 30, 31, 32, 33, 34, 35, 36,
+           38, 39, 40, 41, 42, 43, 44, 45, 47, 49, 50, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66]
+    idx1 = [7,8,14    ,20    ,23    ,24    ,28    ,37    ,46    ,48    ,51]
+    for district_idx in idx1:
+        order_path = '../../processed_data/train/D'+str(district_idx)+'_order_data.csv'
+        traffic_path = '../../processed_data/train/D'+str(district_idx)+'_traffic_data.csv'
+        weather_path = '../../processed_data/train/weather_data.csv'
+        poi_path = '../../processed_data/train/poi_data.csv'
 
-    normalised_data = scale(train_data, axis=1, copy=True)
-    normalised_data[..., 2] = train_data[..., 2]
-    return normalised_data
+        order_data = pd.read_csv(order_path, header=None).values
+        traffic_data = pd.read_csv(traffic_path, header=None).values[..., 1:5]
+        weather_data = pd.read_csv(weather_path, header=None).values[..., 1:4]
+        temp_poi_data = pd.read_csv(poi_path, header=None).values[district_idx - 1:district_idx, 1:26]
+        poi_data = np.tile(temp_poi_data, (3024, 1))
+        train_data = np.concatenate((order_data, traffic_data, weather_data, poi_data), axis=1)
 
+        # normalised_data = scale(train_data, axis=1, copy=True)
+        # normalised_data[..., 2] = train_data[..., 2]
+        total_data = np.concatenate((total_data, train_data), axis=0)
+    total_data = total_data[1:, ...]
+
+    normalised_data = scale(total_data, axis=1, copy=True)
+    normalised_data[..., 0:4] = total_data[..., 0:4]
+
+    dim = total_data.shape[1]
+    return normalised_data, dim
 
 def get_train_data_array_csv_by_active_matrix(district_idx):
     order_path = '../../processed_data/train/D' + str(district_idx) + '_order_data.csv'
@@ -133,11 +163,24 @@ def train_data_split(train_list, label_list, train_size=0.7, test_size=0.1):
 def load_test_data(path):
     temp_test_xdata = pd.read_csv(path + 'test_data.csv')
     temp_test_ydata = pd.read_csv(path + 'test_label.csv')
-    test_data = _construct_xdata(temp_test_xdata)
-    test_label = _construct_ydata(temp_test_ydata)
+    t = []
+    for item in temp_test_xdata.values:
+        item1 = []
+        for s in item:
+            l = s.translate(None, '[]')
+            l = l.split(',')
+            s = np.asarray(l, dtype=np.float32)
+            item1.append(s)
+        t.append(item1)
+    test_data = np.asarray(t)
+
+    test_label = temp_test_ydata.values
     return test_data, test_label
 
 if __name__ == '__main__':
+    get_train_data_array_csv()
+    load_test_data('../../result/attempt6/lr_0.002_loss_2_batch_ratio_0.002/')
+
     for district_id in range(1, 66+1, 1):
         # train_data = get_train_data_array_db(65)
         _, dim = get_train_data_array_csv_by_active_matrix(district_id)

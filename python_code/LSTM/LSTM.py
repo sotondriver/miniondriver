@@ -21,7 +21,7 @@ from process_data import clean_zeros, get_train_data_array_csv, construct_data_f
 
 
 # parameters for tuning
-attempt = [1, 'lr_0.02_loss']
+attempt = [2, 'final_try_2']
 batch_size_ratio = 0.02
 # batch_size = 1
 initial_lr = 0.002
@@ -87,7 +87,7 @@ def initial_lstm_model(activator, data_dim):
     model.add(Dense(1))
     model.add(Activation(activator))
 
-    optimizer = keras.optimizers.Adamax(lr=initial_lr, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
+    optimizer = keras.optimizers.Adam(lr=initial_lr, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
     model.compile(loss='mape', optimizer=optimizer)
 
     return model
@@ -164,18 +164,17 @@ if __name__ == '__main__':
     d = os.path.dirname(MODEL_OUT_PATH)
     if not os.path.exists(d):
         os.makedirs(d)
-    for district_idx in range(1, 66+1, 1):
-        # get data from csv or mongodb
-        data_array, train_dim = get_train_data_array_csv_by_active_matrix(district_idx)
-        # construct data
-        train_array, label_array = construct_data_for_lstm(data_array)
-        # split data by 7:2:1
-        (train_data, train_label), (validate_data, validate_label), (test_data, test_label) \
-            = train_data_split(train_array, label_array)
-        # save the test_data into the models directory
-        save_test_csv(MODEL_OUT_PATH, test_data, test_label)
-        mape_entry = multi_model(train_data, train_label, validate_data, validate_label, district_idx, train_dim)
-        mape_list.append(mape_entry)
+    # get data from csv or mongodb
+    data_array, train_dim = get_train_data_array_csv()
+    # construct data
+    train_array, label_array = construct_data_for_lstm(data_array)
+    # split data by 7:2:1
+    (train_data, train_label), (validate_data, validate_label), (test_data, test_label) \
+        = train_data_split(train_array, label_array)
+    # save the test_data into the models directory
+    save_test_csv(MODEL_OUT_PATH, test_data, test_label)
+    mape_entry = multi_model(train_data, train_label, validate_data, validate_label, 1, train_dim)
+    mape_list.append(mape_entry)
     # save the validation MAPE for every model and overall MAPE
     out_path = MODEL_OUT_PATH + 'LSTM_MAPE_list.csv'
     write_list_to_csv(mape_list, out_path)

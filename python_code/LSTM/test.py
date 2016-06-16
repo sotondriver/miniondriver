@@ -8,7 +8,7 @@ import linecache
 
 from LSTM import initial_lstm_model, initial_lstm_model
 from extend_function import listdir_no_hidden, write_list_to_csv
-from process_data import load_test_data, _construct_xdata
+from process_data import load_test_data
 import numpy as np
 import pandas as pd
 
@@ -42,20 +42,20 @@ def calculate_test_result(attempt_path):
         entry = entry.strip('\n')
         entry_list = entry.split(',')
         # initial model and load model
-        model = initial_lstm_model(entry_list[1])
+        model = initial_lstm_model(entry_list[1], int(entry_list[2]))
         model_path = attempt_path + 'model_district_'+str(idx+1)+'.h5'
         model.load_weights(model_path)
         # load test data
         test_data, test_label = load_test_data(attempt_path)
         predicted = model.predict(test_data)
         # get the colomn of test label
-        temp_test_label = test_label[..., idx]
+        temp_test_label = test_label[..., 2]
         mape = return_mape(predicted, temp_test_label)
         mape_list.append([idx+1]+[entry_list[0]]+[mape])
-        print('District: %d %.8s %f') % (idx+1, entry_list[0], mape)
+        print(('District: %d %.8s %f') % (idx+1, entry_list[0], mape))
     mape_list.append([67]+['Overall mape']+[mape_sum/mape_num])
     write_list_to_csv(mape_list, attempt_path+'TEST_MAPE_list.csv')
-    print('Overall mape: %f') % (mape_sum/mape_num)
+    print(('Overall mape: %f') % (mape_sum/mape_num))
 
 
 def average_model_result(path):
@@ -87,7 +87,7 @@ def average_model_result(path):
         # save all the result
         result_list += result
         # print result
-        print('Processed District: %d') % (model_idx+1)
+        print(('Processed District: %d') % (model_idx+1))
     write_list_to_csv(result_list, path + 'result.csv')
 
 
@@ -118,7 +118,7 @@ def return_predict_label_with_date(predict, district_id):
 
 
 if __name__ == '__main__':
-    MODEL_OUT_PATH = '../../result/'
+    MODEL_OUT_PATH = '../../result/attempt1/'
     #
     dir_list = listdir_no_hidden(MODEL_OUT_PATH)
     parent_path = MODEL_OUT_PATH + dir_list[0]+'/'
@@ -126,5 +126,5 @@ if __name__ == '__main__':
     dir_list1 = listdir_no_hidden(parent_path)
     sub_path = parent_path + dir_list1[0]+'/'
     #
-    # calculate_test_result(path)
-    average_model_result(parent_path)
+    calculate_test_result(parent_path)
+    # average_model_result(parent_path)
