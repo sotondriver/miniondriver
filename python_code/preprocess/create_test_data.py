@@ -36,6 +36,7 @@ def  get_traffic_data_array_db(district_idx):
     time_slot_column = traffic_array[:, 0]
     zero_idx = np.where(time_slot_column == 0)[0]
     if zero_idx.size > 0:
+        print('How many zeros: %d' % (zero_idx.size))
         for idx in zero_idx:
             traffic_array[idx, 0] = predict_time_slot_window[(idx) % 27]
 
@@ -86,24 +87,24 @@ def get_idx(date, time_slot):
 if __name__ == '__main__':
     st = time.time()
     #
-    weather_array = get_weather_data_array_db('test_weather_data')
-    weather_list = weather_array.tolist()
-    weather_path = '../../processed_data/test/weather_data.csv'
-    write_list_to_csv(weather_list, weather_path)
+    # weather_array = get_weather_data_array_db('test_weather_data')
+    # weather_list = weather_array.tolist()
+    # weather_path = '../../processed_data/test/weather_data.csv'
+    # write_list_to_csv(weather_list, weather_path)
 
-    # for district_id in range(1, 66 + 1, 1):
-    #     # order_array = get_order_data_array_db(district_id, 'test_order_data')
-    #     traffic_array = get_traffic_data_array_db(district_id)
-    #
-    #     # order_list = order_array.tolist()
-    #     traffic_list = traffic_array.tolist()
-    #
-    #     order_path = '../../processed_data/test/D' + str(district_id) + '_order_data.csv'
-    #     traffic_path = '../../processed_data/test/D' + str(district_id) + '_traffic_data.csv'
-    #
-    #     # write_list_to_csv(order_list, order_path)
-    #     write_list_to_csv(traffic_list, traffic_path)
-    #
-    #     print('==================================================')
-    # ed = time.time()
-    # print('Overall time: %.2f Minutes' % ((ed-st)/60))
+    for district_id in range(1, 66 + 1, 1):
+        # order_array = get_order_data_array_db(district_id, 'test_order_data')
+        traffic_array = get_traffic_data_array_db(district_id)
+
+        # order_list = order_array.tolist()
+        traffic_list = traffic_array.tolist()
+
+        order_path = '../../processed_data/test/D' + str(district_id) + '_order_data.csv'
+        traffic_path = '../../processed_data/test/D' + str(district_id) + '_traffic_data.csv'
+
+        # write_list_to_csv(order_list, order_path)
+        write_list_to_csv(traffic_list, traffic_path)
+
+        print('==================================================')
+    ed = time.time()
+    print('Overall time: %.2f Minutes' % ((ed-st)/60))
