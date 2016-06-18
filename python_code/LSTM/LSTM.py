@@ -8,10 +8,11 @@ import os
 import time
 import keras
 import numpy as np
+import pandas as pd
 from keras.callbacks import ModelCheckpoint, Callback
 from keras.layers import TimeDistributed, GRU
 from keras.models import Sequential
-from keras.layers.core import Dense, Activation, Dropout, TimeDistributedDense, Flatten
+from keras.layers.core import Dense, Activation, Dropout, TimeDistributedDense, Flatten ,RepeatVector
 from keras.layers.recurrent import LSTM
 from keras.optimizers import SGD
 from keras.regularizers import l1l2, l1, activity_l2
@@ -19,9 +20,20 @@ from extend_function import write_list_to_csv, save_test_csv
 from process_data import clean_zeros, get_train_data_array_csv, construct_data_for_lstm, \
     train_data_split, get_train_data_array_csv_by_active_matrix
 
+# idx = [51]
+# idx1 = [37,46]
+# # idx1 = [7, 8, 14, 20, 23, 24, 28, 37, 46, 48, 51]
+# idx2 = [1, 4, 6, 12, 19, 21, 22, 26, 27, 42]
+# idx3 = [37, 46]
+# idx4 = [2, 3, 5, 9, 10, 11, 13, 15, 16, 17, 18, 25, 29, 30, 31, 32, 33, 34, 35, 36, 38, 39, 40, 41, 43, 44,
+#         45, 47, 49, 50, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66]
+# idx5 = [7,48]
+# idx6 = [28]
+# idx7 = [14,20,24]
+# idx8 = [8,23]
 
 # parameters for tuning
-attempt = [2, 'final_try_on_easy']
+
 batch_size_ratio = 0.002
 # batch_size = 1
 initial_lr = 0.002
@@ -30,17 +42,16 @@ fit_validation_split = 0.2
 fit_epoch = 200
 activator_list = ['linear']
 clean_zeros_flag = True
-fit_monitor = 'loss'
+fit_monitor = 'val_loss'
 
 # for debug visualize
 checkpointer_verbose = 0
 early_stop_verbose = 0
-fit_verbose = 1
+fit_verbose = 0
 
 # path for using
 PARENT_IN_PATH = '../../processed_data/'
-MODEL_OUT_PATH = '../../result/attempt'+str(attempt[0])+'/'\
-                 +str(attempt[1])+'_batch_ratio_'+str(batch_size_ratio)+'/'
+
 train_path = PARENT_IN_PATH + 'didi_train_data.csv'
 label_path = PARENT_IN_PATH + 'didi_train_label.csv'
 
@@ -54,6 +65,7 @@ def initial_lstm_model(activator, data_dim):
 
     model = Sequential()
     if data_dim > 30:
+
         model.add(LSTM(32, input_shape=(timesteps, data_dim), dropout_W=0.25, dropout_U=0.25,
                        return_sequences=True, W_regularizer=l1(0.01), U_regularizer=l1(0.01)))
         model.add(Activation(activator))
@@ -159,26 +171,36 @@ def multi_model(x_train, y_train, x_validate, y_validate, district_id, dim):
 
 
 if __name__ == '__main__':
-    mape_list = []
-    st_time = time.time()
-    d = os.path.dirname(MODEL_OUT_PATH)
-    if not os.path.exists(d):
-        os.makedirs(d)
-    # get data from csv or mongodb
-    data_array, train_dim = get_train_data_array_csv()
-    # construct data
-    train_array, label_array = construct_data_for_lstm(data_array)
-    # split data by 7:2:1
-    (train_data, train_label), (validate_data, validate_label), (test_data, test_label) \
-        = train_data_split(train_array, label_array)
-    # save the test_data into the models directory
-    save_test_csv(MODEL_OUT_PATH, test_data, test_label)
-    mape_entry = multi_model(train_data, train_label, validate_data, validate_label, 1, train_dim)
-    mape_list.append(mape_entry)
-    # save the validation MAPE for every model and overall MAPE
-    out_path = MODEL_OUT_PATH + 'LSTM_MAPE_list.csv'
-    write_list_to_csv(mape_list, out_path)
-    ed_time = time.time()
-    print(' Overall Time: %.2f hours' % ((ed_time - st_time) / 3600))
-    print('overall mape loss: %f\n' % (mape_sum / mape_num))
-    mape_list.append(['overall mape']+[mape_sum / mape_num])
+    path = '../../processed_data/cluster_8.csv'
+    cluster = pd.read_table(path, header=None).values
+    for i in range(6,7+1,1):
+        cluster_idx = cluster[i].tolist()[0].split(',')
+        cluster_idx = map(int, cluster_idx)
+        for j in range(1, 3+1,1):
+
+            attempt = [3, 'final_try_on_idx'+str(i)+'_'+str(j)]
+            MODEL_OUT_PATH = '../../result/attempt' + str(attempt[0]) + '/' \
+                             + str(attempt[1]) + '_batch_ratio_' + str(batch_size_ratio) + '/'
+            mape_list = []
+            st_time = time.time()
+            d = os.path.dirname(MODEL_OUT_PATH)
+            if not os.path.exists(d):
+                os.makedirs(d)
+            # get data from csv or mongodb
+            data_array, train_dim = get_train_data_array_csv(cluster_idx)
+            # construct data
+            train_array, label_array = construct_data_for_lstm(data_array)
+            # split data by 7:2:1
+            (train_data, train_label), (validate_data, validate_label), (test_data, test_label) \
+                = train_data_split(train_array, label_array)
+            # save the test_data into the models directory
+            save_test_csv(MODEL_OUT_PATH, test_data, test_label)
+            mape_entry = multi_model(train_data, train_label, validate_data, validate_label, 1, train_dim)
+            mape_list.append(mape_entry)
+            # save the validation MAPE for every model and overall MAPE
+            out_path = MODEL_OUT_PATH + 'LSTM_MAPE_list.csv'
+            write_list_to_csv(mape_list, out_path)
+            ed_time = time.time()
+            print(' Overall Time: %.2f hours' % ((ed_time - st_time) / 3600))
+            print('overall mape loss: %f\n' % (mape_sum / mape_num))
+            mape_list.append(['overall mape']+[mape_sum / mape_num])
