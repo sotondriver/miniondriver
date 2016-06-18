@@ -15,9 +15,10 @@ from sklearn.preprocessing import scale
 
 predict_time_slot_window = [43, 44, 45, 46, 55, 56, 57, 58, 67, 68, 69, 70, 79, 80, 81, 82, 91, 92, 93, 94, 103, 104,
                             105, 106, 115, 116, 117, 118, 127, 128, 129, 130, 139, 140, 141, 142]
-idx = [1, 2, 3, 4, 5, 6, 9, 10, 11, 12, 13, 15, 16, 17, 18, 19, 21, 22, 25, 26, 27, 29, 30, 31, 32, 33, 34, 35, 36,
-       38, 39, 40, 41, 42, 43, 44, 45, 47, 49, 50, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66]
-idx1 = [7, 8, 14, 20, 23, 24, 28, 37, 46, 48, 51]
+# idx = [1, 2, 3, 4, 5, 6, 9, 10, 11, 12, 13, 15, 16, 17, 18, 19, 21, 22, 25, 26, 27, 29, 30, 31, 32, 33, 34, 35, 36,
+#        38, 39, 40, 41, 42, 43, 44, 45, 47, 49, 50, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66]
+
+
 
 #
 # def get_train_data_array_csv(district_idx):
@@ -35,7 +36,7 @@ idx1 = [7, 8, 14, 20, 23, 24, 28, 37, 46, 48, 51]
 #     return normalised_data
 
 
-def get_train_data_array_csv():
+def get_train_data_array_csv(idx):
     total_data = np.zeros((1, 36))
     for district_idx in idx:
         order_path = '../../processed_data/train/D' + str(district_idx) + '_order_data.csv'
@@ -60,7 +61,7 @@ def get_train_data_array_csv():
     return normalised_data, dim
 
 
-def get_test_data_array_csv():
+def get_test_data_array_csv(idx):
     total_data = np.zeros((1, 36))
     for district_idx in idx:
         order_path = '../../processed_data/test/D' + str(district_idx) + '_order_data.csv'
@@ -83,6 +84,7 @@ def get_test_data_array_csv():
 
     dim = total_data.shape[1]
     return normalised_data, dim
+
 
 def get_train_data_array_csv_by_active_matrix(district_idx):
     order_path = '../../processed_data/train/D' + str(district_idx) + '_order_data.csv'
@@ -161,6 +163,7 @@ def construct_test_data_for_lstm(data):
 
     return _data
 
+
 def clean_zeros(x, y, flag):
     if flag:
         non_zero_idx = np.where(y > 0)[0]
@@ -220,7 +223,6 @@ def load_test_data(path):
 
 
 if __name__ == '__main__':
-
     get_test_data_array_csv()
     load_test_data('../../result/attempt6/lr_0.002_loss_2_batch_ratio_0.002/')
 
